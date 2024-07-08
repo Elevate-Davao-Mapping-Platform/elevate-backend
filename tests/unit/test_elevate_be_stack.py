@@ -8,7 +8,7 @@ from infra.elevate_be_stack import ElevateBeStack
 # resource in elevate_be/elevate_be_stack.py
 def test_sqs_queue_created():
     app = core.App()
-    stack = ElevateBeStack(app, "elevate-be")
+    stack = ElevateBeStack(app, 'elevate-be')
     template = assertions.Template.from_stack(stack)
 
 
