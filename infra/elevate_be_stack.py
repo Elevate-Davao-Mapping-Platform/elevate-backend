@@ -1,4 +1,4 @@
-from aws_cdk import Stack, CfnOutput, Duration, CfnParameter, aws_dynamodb as dynamodb, aws_cognito as cognito
+from aws_cdk import Stack, CfnOutput, Duration, aws_dynamodb as dynamodb, aws_cognito as cognito
 from constructs import Construct
 from infra.appsync import AppsyncAPI
 
@@ -31,7 +31,7 @@ class ElevateBeStack(Stack):
                 min_length=8,
                 require_lowercase=True,
                 require_digits=True,
-                require_symbols=False,
+                require_symbols=True,
                 require_uppercase=True,
                 temp_password_validity=Duration.days(7),
             ),
@@ -45,7 +45,7 @@ class ElevateBeStack(Stack):
         cognito_user_pool_client = cognito_user_pool.add_client(
             'UserPoolClient',
             user_pool_client_name=f'{project_name}-{stage}-{service_name}-UserPoolClient',
-            auth_flows=cognito.AuthFlow(admin_user_password=True, user_password=True, custom=True),
+            auth_flows=cognito.AuthFlow(admin_user_password=True, user_password=True, custom=True, user_srp=True),
             o_auth=cognito.OAuthSettings(
                 flows=cognito.OAuthFlows(authorization_code_grant=True, implicit_code_grant=True),
                 scopes=[
@@ -59,7 +59,7 @@ class ElevateBeStack(Stack):
                 logout_urls=['https://cognito.com'],
             ),
             prevent_user_existence_errors=True,
-            generate_secret=True,
+            generate_secret=False,
             refresh_token_validity=Duration.days(180),
             supported_identity_providers=[cognito.UserPoolClientIdentityProvider.COGNITO],
         )
@@ -87,6 +87,7 @@ class ElevateBeStack(Stack):
         api = AppsyncAPI(self, 'AppsyncAPI', demo_table=demo_table, cognito_user_pool=cognito_user_pool)
 
         # Outputs
+        CfnOutput(self, 'GraphQLAPIID', value=api.api_id)
         CfnOutput(self, 'GraphQLAPIURL', value=api.graphql_url)
         CfnOutput(self, 'GraphQL API Key', value=api.api_key)
         CfnOutput(

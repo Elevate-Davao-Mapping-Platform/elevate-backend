@@ -16,12 +16,18 @@ class AppsyncAPI(Construct):
         # Call the base class constructor
         super().__init__(scope, construct_id, **kwargs)
 
+        project_name = self.node.try_get_context('projectName')
+        stage = self.node.try_get_context('stage')
+        service_name = self.node.try_get_context('serviceName')
+
+        graphql_api_name = f'{project_name}-{stage}-{service_name}-GraphQLApi'
+
         gql_schema = path.join(path.dirname(__file__), '..', 'schema', 'schema.graphql')
 
         api = appsync.GraphqlApi(
             self,
             'Api',
-            name='demo',
+            name=graphql_api_name,
             definition=appsync.Definition.from_file(gql_schema),
             authorization_config=appsync.AuthorizationConfig(
                 default_authorization=appsync.AuthorizationMode(authorization_type=appsync.AuthorizationType.API_KEY),
@@ -72,3 +78,4 @@ class AppsyncAPI(Construct):
         # Output values
         self.graphql_url = api.graphql_url
         self.api_key = api.api_key
+        self.api_id = api.api_id

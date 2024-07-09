@@ -1,17 +1,17 @@
-type demo {
-  id: String!
-  version: String!
-}
-
-type Query {
-  getDemos: [demo!]
-  getDemosConsistent: [demo!]
-}
-
 input DemoInput {
-  version: String!
+	version: String!
+}
+
+type demo @aws_api_key @aws_cognito_user_pools {
+	id: String!
+	version: String!
 }
 
 type Mutation {
-  addDemo(input: DemoInput!): demo
+	addDemo(input: DemoInput!): demo @aws_cognito_user_pools(cognito_groups: ["admin"])
+}
+
+type Query {
+	getDemos: [demo!] @aws_api_key @aws_cognito_user_pools(cognito_groups: ["admin"])
+	getDemosConsistent: [demo!] @aws_api_key @aws_cognito_user_pools(cognito_groups: ["admin"])
 }
