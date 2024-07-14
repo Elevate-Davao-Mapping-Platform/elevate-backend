@@ -37,7 +37,9 @@ jobs:
       - name: Deploy CDK Stack
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-          poetry run cdk deploy --all --context prod --require-approval never
+            poetry run cdk deploy elevate-backend-stack-prod --context stage=prod --require-approval never
           elif [[ "${{ github.ref }}" == "refs/heads/stage" ]]; then
-          poetry run cdk deploy --all --context stage --require-approval never
+            poetry run cdk deploy elevate-backend-stack-stage --context stage=stage --require-approval never
+          elif [[ "${{ github.ref }}" == "refs/heads/stage" ]]; then
+            poetry run cdk deploy elevate-backend-stack-dev --context stage=dev --require-approval never
           fi

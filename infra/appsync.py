@@ -43,7 +43,7 @@ class AppsyncAPI(Construct):
             xray_enabled=True,
         )
 
-        demo_dS = api.add_dynamo_db_data_source('demoDataSource', demo_table)
+        demo_dS = api.add_dynamo_db_data_source(f'{project_name}-{stage}-{service_name}-DDBsource', demo_table)
 
         # Resolver for the Query "getDemos" that scans the DynamoDb table and returns the entire list.
         demo_dS.create_resolver(
