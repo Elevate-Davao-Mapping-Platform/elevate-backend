@@ -27,12 +27,11 @@ jobs:
       #  -----  install dependencies   -----
       #----------------------------------------------
       - name: Install dependencies
-        run: |
-            poetry add ruff
-            poetry shell
+        run: poetry install --only format
 
       #----------------------------------------------
       #  -----  Run Formatter   -----
       #----------------------------------------------
       - name: Run Formatters
-        run: ruff check .
+        run: |
+          poetry run ruff check .
