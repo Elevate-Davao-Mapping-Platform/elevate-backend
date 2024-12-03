@@ -1,9 +1,9 @@
+import os
 from os import path
-from aws_cdk import (
-    aws_appsync as appsync,
-    aws_dynamodb as dynamodb,
-    aws_cognito as cognito,
-)
+
+from aws_cdk import aws_appsync as appsync
+from aws_cdk import aws_cognito as cognito
+from aws_cdk import aws_dynamodb as dynamodb
 from constructs import Construct
 
 
@@ -12,15 +12,13 @@ class AppsyncAPI(Construct):
         # Extract the custom argument
         demo_table: dynamodb.Table = kwargs.pop('demo_table', None)
         cognito_user_pool: cognito.UserPool = kwargs.pop('cognito_user_pool', None)
+        llm_rag_api = kwargs.pop('llm_rag_api', None)  # Call the base class constructor
+        main_resources_name = os.environ['RESOURCE_NAME']
+        stage = os.environ['DEPLOYMENT_ENVIRONMENT']
 
-        # Call the base class constructor
         super().__init__(scope, construct_id, **kwargs)
 
-        project_name = self.node.try_get_context('projectName')
-        stage = self.node.try_get_context('stage')
-        service_name = self.node.try_get_context('serviceName')
-
-        graphql_api_name = f'{project_name}-{stage}-{service_name}-GraphQLApi'
+        graphql_api_name = f'{main_resources_name}-{stage}-GraphQLApi'
 
         gql_schema = path.join(path.dirname(__file__), '..', 'schema', 'schema.graphql')
 
@@ -43,7 +41,7 @@ class AppsyncAPI(Construct):
             xray_enabled=True,
         )
 
-        demo_dS = api.add_dynamo_db_data_source(f'{project_name}-{stage}-{service_name}-DDBsource', demo_table)
+        demo_dS = api.add_dynamo_db_data_source(f'{main_resources_name}-{stage}-DDBsource', demo_table)
 
         # Resolver for the Query "getDemos" that scans the DynamoDb table and returns the entire list.
         demo_dS.create_resolver(
@@ -73,6 +71,17 @@ class AppsyncAPI(Construct):
             field_name='getDemosConsistent',
             request_mapping_template=appsync.MappingTemplate.dynamo_db_scan_table(True),
             response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
+        )
+
+        rag_ds = api.add_lambda_data_source('RagApiDataSource', llm_rag_api.lambda_rag_api)
+
+        # Create resolver for the processRagQuery mutation
+        rag_ds.create_resolver(
+            'MutationProcessRagQuery',
+            type_name='Mutation',
+            field_name='processRagQuery',
+            request_mapping_template=appsync.MappingTemplate.lambda_request(),
+            response_mapping_template=appsync.MappingTemplate.lambda_result(),
         )
 
         # Output values

@@ -1,0 +1,11 @@
+{
+  "elevate-backend-stack-dev": {
+    "GraphQLAPIID": "efgnaybdibca7hrgfpg3mmlyva",
+    "UserPoolId": "ap-southeast-1_KHOGxfpxG",
+    "AppClientId": "4vcpdqr7h6258m68omf9c992ui",
+    "LLMRAGAPIDeploymentEnvironment33F907F3": "dev",
+    "GraphQLAPIURL": "https://gmarnqw5o5dmlmrafykuikse7u.appsync-api.ap-southeast-1.amazonaws.com/graphql",
+    "GraphQLAPIKey": "da2-bceoojq2kjamjkegnxqr4ba6ne",
+    "LLMRAGAPIFunctionUrl7F513034": "arn:aws:lambda:ap-southeast-1:058264295349:function:elevate-backend-stack-app-dev"
+  }
+}
