@@ -1,13 +1,8 @@
 import os
-from aws_cdk import (
-    aws_lambda as lambda_,
-    Duration,
-    CfnOutput,
-    RemovalPolicy,
-    aws_iam,
-)
+
+from aws_cdk import CfnOutput, Duration, aws_iam
+from aws_cdk import aws_lambda as lambda_
 from constructs import Construct
-from aws_cdk.aws_lambda_python_alpha import PythonFunction, PythonLayerVersion, BundlingOptions
 
 
 class LLMRAGAPI(Construct):
@@ -29,35 +24,14 @@ class LLMRAGAPI(Construct):
         self.stage = os.environ['DEPLOYMENT_ENVIRONMENT']
 
         # Create resources
-        self.create_lambda_layers()
-        self.create_lambda_functions()
+        self.create_lambda_function()
         self.generate_cloudformation_outputs()
 
-    def create_lambda_layers(self):
+    def create_lambda_function(self):
         """
-        Create the Lambda layers that are necessary for the additional runtime
-        dependencies of the Lambda Functions using PythonLayerVersion.
+        Create the Lambda Function using Docker image for the FastAPI server
+        and create necessary IAM roles and permissions.
         """
-        self.lambda_layer_llm_rag_api = PythonLayerVersion(
-            self,
-            f'LambdaLayer-LLM-RAG-API-{self.stage}',
-            layer_version_name=f'{self.main_resources_name}-layer-{self.stage}',
-            entry='lambdas/rag_api/layers',  # Directory containing requirements.txt
-            compatible_runtimes=[
-                lambda_.Runtime.PYTHON_3_10,
-            ],
-            description='Lambda Layer for Python with Bedrock and dependencies',
-            compatible_architectures=[lambda_.Architecture.X86_64],
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-
-    def create_lambda_functions(self):
-        """
-        Create the Lambda Functions for the FastAPI server using PythonFunction construct
-        and create a Function URL to expose it.
-        """
-        log_level = 'DEBUG' if self.stage == 'dev' else 'INFO'
-
         # Define the IAM role
         lambda_role = aws_iam.Role(
             self,
@@ -72,43 +46,37 @@ class LLMRAGAPI(Construct):
         # Grant permission to invoke Bedrock
         lambda_role.add_to_policy(
             aws_iam.PolicyStatement(
-                actions=['bedrock:InvokeModel'],
+                actions=['bedrock:InvokeModel', 'secretsmanager:GetSecretValue'],
                 resources=[
-                    'arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
-                    'arn:aws:bedrock:*:*:foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0',
+                    'arn:aws:bedrock:*:*:foundation-model/anthropic.claude-v2:1',
+                    'arn:aws:bedrock:*:*:foundation-model/amazon.titan-embed-text-v2:0',
+                    'arn:aws:secretsmanager:*:*:secret:elevate/*',
                 ],
             )
         )
 
-        # Create the Lambda function
-        self.lambda_rag_api = PythonFunction(
+        # Create the Lambda function using Docker
+        north_virginia_region = 'us-east-1'
+        self.lambda_rag_api = lambda_.DockerImageFunction(
             self,
-            f'Lambda-LLM-RAG-API-{self.stage}',
-            function_name=f'{self.main_resources_name}-app-{self.stage}',
-            runtime=lambda_.Runtime.PYTHON_3_10,
-            handler='handler',
-            entry='lambdas/rag_api',
-            index='index.py',
+            f'{self.main_resources_name}-llm-service-{self.stage}',
+            function_name=f'{self.main_resources_name}-llm-service-{self.stage}',
+            code=lambda_.DockerImageCode.from_image_asset(
+                'lambdas/rag_api',
+                exclude=['*.pyc', '.pytest_cache', '__pycache__'],
+            ),
             timeout=Duration.seconds(120),
             memory_size=1024,
             environment={
                 'STAGE': self.stage,
-                'LOG_LEVEL': log_level,
+                'LOG_LEVEL': 'DEBUG' if self.stage == 'dev' else 'INFO',
+                'POWERTOOLS_SERVICE_NAME': 'llm-service',
+                'POWERTOOLS_LOGGER_LOG_EVENT': 'true',
+                'BEDROCK_AWS_REGION': north_virginia_region,
             },
-            layers=[
-                self.lambda_layer_llm_rag_api,
-            ],
-            bundling=BundlingOptions(
-                asset_excludes=[
-                    '**/__pycache__',
-                ],
-            ),
+            architecture=lambda_.Architecture.X86_64,
             role=lambda_role,
         )
-
-        # Add inside the ElevateBeStack class after creating the API
-        self.lambda_rag_api.add_environment('POWERTOOLS_SERVICE_NAME', 'rag-api')
-        self.lambda_rag_api.add_environment('POWERTOOLS_LOGGER_LOG_EVENT', 'true')
 
     def generate_cloudformation_outputs(self):
         """
@@ -123,7 +91,7 @@ class LLMRAGAPI(Construct):
 
         CfnOutput(
             self,
-            'FunctionUrl',
+            'FunctionArn',
             value=self.lambda_rag_api.function_arn,
             description='Function ARN',
         )

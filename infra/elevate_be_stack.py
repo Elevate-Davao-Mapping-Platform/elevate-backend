@@ -13,8 +13,8 @@ class ElevateBeStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        main_resources_name = os.environ['RESOURCE_NAME']
-        stage = os.environ.get('DEPLOYMENT_ENVIRONMENT')
+        main_resources_name = os.getenv('RESOURCE_NAME')
+        stage = os.getenv('DEPLOYMENT_ENVIRONMENT')
 
         # DynamoDB Table
         demo_table = dynamodb.Table(
@@ -95,7 +95,7 @@ class ElevateBeStack(Stack):
         # Appsync API
         api = AppsyncAPI(
             self,
-            'AppsyncAPI',
+            f'{main_resources_name}-{stage}-appsync-api',
             demo_table=demo_table,
             cognito_user_pool=cognito_user_pool,
             llm_rag_api=llm_rag_api,

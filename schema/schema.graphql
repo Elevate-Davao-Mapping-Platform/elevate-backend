@@ -10,7 +10,6 @@ type demo @aws_api_key @aws_cognito_user_pools {
 type Mutation {
 	addDemo(input: DemoInput!): demo @aws_cognito_user_pools(cognito_groups: ["admin"])
 	processRagQuery(input: RagInput!): RagResponse
-		@aws_cognito_user_pools(cognito_groups: ["admin"])
 }
 
 type Query {
@@ -24,7 +23,6 @@ type Subscription {
 }
 
 type RagResponse {
-	id: String!
 	response: String!
 	status: String!
 }

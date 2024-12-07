@@ -12,6 +12,7 @@ os.environ['RESOURCE_NAME'] = main_resources_name
 
 stage = app.node.try_get_context('stage')
 os.environ['DEPLOYMENT_ENVIRONMENT'] = stage
+os.environ['AWS_REGION'] = 'ap-southeast-1'
 
 construct_id = f'{main_resources_name}-{stage}'
 

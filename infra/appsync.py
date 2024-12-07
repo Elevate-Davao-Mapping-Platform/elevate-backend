@@ -13,12 +13,13 @@ class AppsyncAPI(Construct):
         demo_table: dynamodb.Table = kwargs.pop('demo_table', None)
         cognito_user_pool: cognito.UserPool = kwargs.pop('cognito_user_pool', None)
         llm_rag_api = kwargs.pop('llm_rag_api', None)  # Call the base class constructor
-        main_resources_name = os.environ['RESOURCE_NAME']
-        stage = os.environ['DEPLOYMENT_ENVIRONMENT']
 
         super().__init__(scope, construct_id, **kwargs)
 
-        graphql_api_name = f'{main_resources_name}-{stage}-GraphQLApi'
+        main_resources_name = os.getenv('RESOURCE_NAME')
+        stage = os.getenv('DEPLOYMENT_ENVIRONMENT')
+
+        graphql_api_name = f'{main_resources_name}-{stage}-graphql-service'
 
         gql_schema = path.join(path.dirname(__file__), '..', 'schema', 'schema.graphql')
 
@@ -45,7 +46,7 @@ class AppsyncAPI(Construct):
 
         # Resolver for the Query "getDemos" that scans the DynamoDb table and returns the entire list.
         demo_dS.create_resolver(
-            'QueryGetDemosResolver',
+            f'{main_resources_name}-{stage}-QueryGetDemosResolver',
             type_name='Query',
             field_name='getDemos',
             request_mapping_template=appsync.MappingTemplate.dynamo_db_scan_table(),
@@ -54,7 +55,7 @@ class AppsyncAPI(Construct):
 
         # Resolver for the Mutation "addDemo" that puts the item into the DynamoDb table.
         demo_dS.create_resolver(
-            'MutationAddDemoResolver',
+            f'{main_resources_name}-{stage}-MutationAddDemoResolver',
             type_name='Mutation',
             field_name='addDemo',
             request_mapping_template=appsync.MappingTemplate.dynamo_db_put_item(
@@ -66,18 +67,21 @@ class AppsyncAPI(Construct):
 
         # To enable DynamoDB read consistency with the `MappingTemplate`:
         demo_dS.create_resolver(
-            'QueryGetDemosConsistentResolver',
+            f'{main_resources_name}-{stage}-QueryGetDemosConsistentResolver',
             type_name='Query',
             field_name='getDemosConsistent',
             request_mapping_template=appsync.MappingTemplate.dynamo_db_scan_table(True),
             response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
         )
 
-        rag_ds = api.add_lambda_data_source('RagApiDataSource', llm_rag_api.lambda_rag_api)
+        llm_service_ds = api.add_lambda_data_source(
+            f'{main_resources_name}-{stage}-llm-service-data-source',
+            llm_rag_api.lambda_rag_api,
+        )
 
         # Create resolver for the processRagQuery mutation
-        rag_ds.create_resolver(
-            'MutationProcessRagQuery',
+        llm_service_ds.create_resolver(
+            f'{main_resources_name}-{stage}-MutationProcessRagQuery',
             type_name='Mutation',
             field_name='processRagQuery',
             request_mapping_template=appsync.MappingTemplate.lambda_request(),
