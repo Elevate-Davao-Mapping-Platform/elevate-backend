@@ -1,19 +1,27 @@
-from aws_cdk import Stack, CfnOutput, Duration, aws_dynamodb as dynamodb, aws_cognito as cognito
+import os
+
+from aws_cdk import CfnOutput, Duration, Stack
+from aws_cdk import aws_cognito as cognito
+from aws_cdk import aws_dynamodb as dynamodb
 from constructs import Construct
+
 from infra.appsync import AppsyncAPI
+from infra.entity_table import EntityTable
+from infra.rag_api import LLMRAGAPI
 
 
 class ElevateBeStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-        project_name = self.node.try_get_context('projectName')
-        stage = self.node.try_get_context('stage')
-        service_name = self.node.try_get_context('serviceName')
+
+        main_resources_name = os.getenv('RESOURCE_NAME')
+        stage = os.getenv('DEPLOYMENT_ENVIRONMENT')
 
         # DynamoDB Table
         demo_table = dynamodb.Table(
             self,
-            f'{project_name}-{stage}-DemoTable',
+            f'{main_resources_name}-{stage}-DemoTable',
+            table_name=f'{main_resources_name}-{stage}-DemoTable',
             partition_key=dynamodb.Attribute(name='id', type=dynamodb.AttributeType.STRING),
         )
 
@@ -21,7 +29,7 @@ class ElevateBeStack(Stack):
         cognito_user_pool = cognito.UserPool(
             self,
             'ElevateUserPool',
-            user_pool_name=f'{project_name}-{stage}-{service_name}-UserPool',
+            user_pool_name=f'{main_resources_name}-{stage}-UserPool',
             account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
             auto_verify=cognito.AutoVerifiedAttrs(email=True),
             self_sign_up_enabled=True,
@@ -44,7 +52,7 @@ class ElevateBeStack(Stack):
         )
         cognito_user_pool_client = cognito_user_pool.add_client(
             'UserPoolClient',
-            user_pool_client_name=f'{project_name}-{stage}-{service_name}-UserPoolClient',
+            user_pool_client_name=f'{main_resources_name}-{stage}-UserPoolClient',
             auth_flows=cognito.AuthFlow(admin_user_password=True, user_password=True, custom=True, user_srp=True),
             o_auth=cognito.OAuthSettings(
                 flows=cognito.OAuthFlows(authorization_code_grant=True, implicit_code_grant=True),
@@ -83,8 +91,19 @@ class ElevateBeStack(Stack):
             user_pool_id=cognito_user_pool.user_pool_id,
         )
 
+        # LLM RAG API
+        entity_table = EntityTable(self, 'EntityTable')
+        llm_rag_api = LLMRAGAPI(self, 'LLMRAGAPI', entity_table=entity_table)
+
         # Appsync API
-        api = AppsyncAPI(self, 'AppsyncAPI', demo_table=demo_table, cognito_user_pool=cognito_user_pool)
+        api = AppsyncAPI(
+            self,
+            f'{main_resources_name}-{stage}-appsync-api',
+            demo_table=demo_table,
+            cognito_user_pool=cognito_user_pool,
+            llm_rag_api=llm_rag_api,
+            entity_table=entity_table.entity_table,
+        )
 
         # Outputs
         CfnOutput(self, 'GraphQLAPIID', value=api.api_id)
@@ -94,11 +113,11 @@ class ElevateBeStack(Stack):
             self,
             'UserPoolId',
             value=cognito_user_pool.user_pool_id,
-            export_name=f"UserPoolId-{self.node.try_get_context('stage')}",
+            export_name=f'UserPoolId-{stage}',
         )
         CfnOutput(
             self,
             'AppClientId',
             value=cognito_user_pool_client.user_pool_client_id,
-            export_name=f"AppClientId-{self.node.try_get_context('stage')}",
+            export_name=f'AppClientId-{stage}',
         )

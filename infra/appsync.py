@@ -1,26 +1,25 @@
+import os
 from os import path
-from aws_cdk import (
-    aws_appsync as appsync,
-    aws_dynamodb as dynamodb,
-    aws_cognito as cognito,
-)
+
+from aws_cdk import aws_appsync as appsync
+from aws_cdk import aws_cognito as cognito
+from aws_cdk import aws_dynamodb as dynamodb
 from constructs import Construct
 
 
 class AppsyncAPI(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
-        # Extract the custom argument
         demo_table: dynamodb.Table = kwargs.pop('demo_table', None)
         cognito_user_pool: cognito.UserPool = kwargs.pop('cognito_user_pool', None)
+        llm_rag_api = kwargs.pop('llm_rag_api', None)
+        entity_table: dynamodb.Table = kwargs.pop('entity_table', None)
 
-        # Call the base class constructor
         super().__init__(scope, construct_id, **kwargs)
 
-        project_name = self.node.try_get_context('projectName')
-        stage = self.node.try_get_context('stage')
-        service_name = self.node.try_get_context('serviceName')
+        main_resources_name = os.getenv('RESOURCE_NAME')
+        stage = os.getenv('DEPLOYMENT_ENVIRONMENT')
 
-        graphql_api_name = f'{project_name}-{stage}-{service_name}-GraphQLApi'
+        graphql_api_name = f'{main_resources_name}-{stage}-graphql-service'
 
         gql_schema = path.join(path.dirname(__file__), '..', 'schema', 'schema.graphql')
 
@@ -43,11 +42,11 @@ class AppsyncAPI(Construct):
             xray_enabled=True,
         )
 
-        demo_dS = api.add_dynamo_db_data_source(f'{project_name}-{stage}-{service_name}-DDBsource', demo_table)
+        demo_dS = api.add_dynamo_db_data_source(f'{main_resources_name}-{stage}-DDBsource', demo_table)
 
         # Resolver for the Query "getDemos" that scans the DynamoDb table and returns the entire list.
         demo_dS.create_resolver(
-            'QueryGetDemosResolver',
+            f'{main_resources_name}-{stage}-QueryGetDemosResolver',
             type_name='Query',
             field_name='getDemos',
             request_mapping_template=appsync.MappingTemplate.dynamo_db_scan_table(),
@@ -56,7 +55,7 @@ class AppsyncAPI(Construct):
 
         # Resolver for the Mutation "addDemo" that puts the item into the DynamoDb table.
         demo_dS.create_resolver(
-            'MutationAddDemoResolver',
+            f'{main_resources_name}-{stage}-MutationAddDemoResolver',
             type_name='Mutation',
             field_name='addDemo',
             request_mapping_template=appsync.MappingTemplate.dynamo_db_put_item(
@@ -68,10 +67,72 @@ class AppsyncAPI(Construct):
 
         # To enable DynamoDB read consistency with the `MappingTemplate`:
         demo_dS.create_resolver(
-            'QueryGetDemosConsistentResolver',
+            f'{main_resources_name}-{stage}-QueryGetDemosConsistentResolver',
             type_name='Query',
             field_name='getDemosConsistent',
             request_mapping_template=appsync.MappingTemplate.dynamo_db_scan_table(True),
+            response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
+        )
+
+        llm_service_ds = api.add_lambda_data_source(
+            f'{main_resources_name}-{stage}-llm-service-data-source',
+            llm_rag_api.lambda_rag_api,
+        )
+
+        # Create resolver for the processRagQuery mutation
+        llm_service_ds.create_resolver(
+            f'{main_resources_name}-{stage}-MutationQueryChat',
+            type_name='Mutation',
+            field_name='queryChat',
+            request_mapping_template=appsync.MappingTemplate.lambda_request(),
+            response_mapping_template=appsync.MappingTemplate.lambda_result(),
+        )
+
+        # Add the DynamoDB table as a data source
+        chat_dS = api.add_dynamo_db_data_source(f'{main_resources_name}-{stage}-ChatDDBsource', entity_table)
+
+        # Resolver for the Query "getChatTopics"
+        chat_dS.create_resolver(
+            f'{main_resources_name}-{stage}-QueryGetChatTopicsResolver',
+            type_name='Query',
+            field_name='getChatTopics',
+            request_mapping_template=appsync.MappingTemplate.from_string(
+                """
+                {
+                    "version": "2017-02-28",
+                    "operation": "Query",
+                    "query": {
+                        "expression": "hashKey = :hashKey",
+                        "expressionValues": {
+                            ":hashKey": $util.dynamodb.toDynamoDBJson("ChatTopic#$context.arguments.userId")
+                        }
+                    }
+                }
+            """
+            ),
+            response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
+        )
+
+        # Resolver for the Query "getChats"
+        chat_dS.create_resolver(
+            f'{main_resources_name}-{stage}-QueryGetChatsResolver',
+            type_name='Query',
+            field_name='getChats',
+            request_mapping_template=appsync.MappingTemplate.from_string(
+                """
+                {
+                    "version": "2017-02-28",
+                    "operation": "Query",
+                    "query": {
+                        "expression": "hashKey = :hashKey and begins_with(rangeKey, :rangeKeyPrefix)",
+                        "expressionValues": {
+                            ":hashKey": $util.dynamodb.toDynamoDBJson("Chat#$context.arguments.userId"),
+                            ":rangeKeyPrefix": $util.dynamodb.toDynamoDBJson("v0#$context.arguments.chatTopicId#")
+                        }
+                    }
+                }
+            """
+            ),
             response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
         )
 

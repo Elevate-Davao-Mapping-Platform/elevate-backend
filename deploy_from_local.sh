@@ -1,1 +1,0 @@
-cdk deploy elevate-backend-stack-dev --outputs-file outputs.json -c stage=dev

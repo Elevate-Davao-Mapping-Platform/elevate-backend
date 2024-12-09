@@ -9,7 +9,7 @@ from infra.elevate_be_stack import ElevateBeStack
 def test_sqs_queue_created():
     app = core.App()
     stack = ElevateBeStack(app, 'elevate-be')
-    template = assertions.Template.from_stack(stack)
+    assertions.Template.from_stack(stack)
 
 
 #     template.has_resource_properties("AWS::SQS::Queue", {
