@@ -17,7 +17,7 @@ from repositories.chat_topic_repository import ChatTopicRepository
 from utils.logger import logger
 
 
-def generate_response(chat_in: ChatPromptIn):
+def generate_response(chat_in: ChatPromptIn, chat_history_context: str):
     # Configuration
     secret_name = 'elevate/pinecone-api-key'
     region_name = os.getenv('BEDROCK_AWS_REGION')
@@ -69,8 +69,16 @@ def generate_response(chat_in: ChatPromptIn):
         query_engine = index.as_query_engine(llm=llm)
 
         # Perform the query
-        llm_result = query_engine.query(chat_in.query)
+        query = (
+            f'You are an expert in Davao City Startups. '
+            f'You are given whatever context thrown at you and you will answer the user prompt without hallucinating '
+            'or mentioning youre not given enough context. '
+            f'Chat History: {chat_history_context}\n\nUser Prompt: {chat_in.query}\n\nResponse:'
+        )
+        llm_result = query_engine.query(query)
+
         logger.debug(f'Response: {llm_result}')
+
         response = {
             'response': llm_result.response,
             'status': HTTPStatus.OK,
@@ -89,9 +97,11 @@ def process_prompt(chat_in: ChatPromptIn):
     chat_topic_repository = ChatTopicRepository()
     chat_repository = ChatRepository()
 
+    # Check if chat topic exists
+    chat_topic_id = chat_in.chatTopicId
     status, _, message = chat_topic_repository.query_chat_topic(chat_in.userId, chat_in.chatTopicId)
     if status != HTTPStatus.OK:
-        status, _, message = chat_topic_repository.store_chat_topic(
+        status, chat_topic, message = chat_topic_repository.store_chat_topic(
             chat_topic_in=ChatTopicIn(
                 userId=chat_in.userId,
                 title=chat_in.chatTopicId,
@@ -103,7 +113,15 @@ def process_prompt(chat_in: ChatPromptIn):
                 'status': status,
             }
 
-    llm_response = generate_response(chat_in)
+        chat_topic_id = chat_topic.entryId
+
+    _, chats, _ = chat_repository.get_chats_in_topic(chat_topic_id, chat_in.userId)
+    chats = chats or []
+    chats = sorted(chats, key=lambda x: x.createDate, reverse=True)
+    chat_history_for_prompt = '\n'.join([chat.message for chat in chats])
+
+    llm_response = generate_response(chat_in, chat_history_for_prompt)
+
     if llm_response['status'] != HTTPStatus.OK:
         return llm_response
 

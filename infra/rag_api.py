@@ -60,7 +60,12 @@ class LLMRAGAPI(Construct):
         # Add the entity table to the Lambda function environment variables
         lambda_role.add_to_policy(
             aws_iam.PolicyStatement(
-                actions=['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
+                actions=[
+                    'dynamodb:Query',
+                    'dynamodb:GetItem',
+                    'dynamodb:PutItem',
+                    'dynamodb:Scan',
+                ],
                 resources=[self.entity_table.table_arn],
             )
         )

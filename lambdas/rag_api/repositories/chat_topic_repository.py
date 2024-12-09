@@ -72,7 +72,10 @@ class ChatTopicRepository:
                 ChatTopic.hashKey == hash_key,
                 ChatTopic.rangeKey == range_key,
             )
-            return HTTPStatus.OK, chat_topic_entry, None
+            if chat_topic_entry:
+                return HTTPStatus.OK, chat_topic_entry, None
+
+            return HTTPStatus.NOT_FOUND, None, 'Chat topic not found'
 
         except QueryError as e:
             message = f'Failed to query chat topic: {str(e)}'
