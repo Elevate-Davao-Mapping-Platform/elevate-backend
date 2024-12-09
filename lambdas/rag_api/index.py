@@ -4,15 +4,20 @@ from http import HTTPStatus
 
 import boto3
 from botocore.exceptions import ClientError
+from constants.chat_constants import ChatType
 from llama_index.core import VectorStoreIndex
 from llama_index.embeddings.bedrock import BedrockEmbedding, Models
 from llama_index.llms.bedrock import Bedrock
 from llama_index.vector_stores.pinecone import PineconeVectorStore
+from models.chat import ChatIn, ChatOut, ChatPromptIn
+from models.chat_topic import ChatTopicIn
 from pinecone import Pinecone
+from repositories.chat_repository import ChatRepository
+from repositories.chat_topic_repository import ChatTopicRepository
 from utils.logger import logger
 
 
-def prompt(input_text: str):
+def generate_response(chat_in: ChatPromptIn):
     # Configuration
     secret_name = 'elevate/pinecone-api-key'
     region_name = os.getenv('BEDROCK_AWS_REGION')
@@ -64,10 +69,10 @@ def prompt(input_text: str):
         query_engine = index.as_query_engine(llm=llm)
 
         # Perform the query
-        result = query_engine.query(input_text)
-        logger.debug(f'Response: {result}')
+        llm_result = query_engine.query(chat_in.query)
+        logger.debug(f'Response: {llm_result}')
         response = {
-            'response': result.response,
+            'response': llm_result.response,
             'status': HTTPStatus.OK,
         }
         return response
@@ -80,11 +85,74 @@ def prompt(input_text: str):
         }
 
 
+def process_prompt(chat_in: ChatPromptIn):
+    chat_topic_repository = ChatTopicRepository()
+    chat_repository = ChatRepository()
+
+    status, _, message = chat_topic_repository.query_chat_topic(chat_in.userId, chat_in.chatTopicId)
+    if status != HTTPStatus.OK:
+        status, _, message = chat_topic_repository.store_chat_topic(
+            chat_topic_in=ChatTopicIn(
+                userId=chat_in.userId,
+                title=chat_in.chatTopicId,
+            )
+        )
+        if status != HTTPStatus.OK:
+            return {
+                'response': message,
+                'status': status,
+            }
+
+    llm_response = generate_response(chat_in)
+    if llm_response['status'] != HTTPStatus.OK:
+        return llm_response
+
+    # Store the query chat
+    user_prompt_chat_in = ChatIn(
+        userId=chat_in.userId,
+        chatTopicId=chat_in.chatTopicId,
+        message=chat_in.query,
+        type=ChatType.USER_PROMPT.value,
+    )
+    status, user_prompt_chat, message = chat_repository.store_chat(
+        chat_in=user_prompt_chat_in,
+    )
+    if status != HTTPStatus.OK:
+        return {
+            'response': message,
+            'status': status,
+        }
+
+    # Store the response chat
+    llm_response_chat_in = ChatIn(
+        userId=chat_in.userId,
+        chatTopicId=chat_in.chatTopicId,
+        message=llm_response['response'],
+        type=ChatType.LLM_RESPONSE.value,
+    )
+    status, _, message = chat_repository.store_chat(
+        chat_in=llm_response_chat_in,
+    )
+    if status != HTTPStatus.OK:
+        return {
+            'response': message,
+            'status': status,
+        }
+
+    return ChatOut(
+        response=llm_response['response'],
+        chatTopicId=chat_in.chatTopicId,
+        userId=chat_in.userId,
+        chatId=user_prompt_chat.entryId,
+    ).model_dump()
+
+
 def handler(event, context):
     _ = context
     logger.debug(f'Received event: {event}')
 
     body = event['arguments']
-    prompt_text = body['input']['query']
-    response = prompt(prompt_text)
+    chat_in = ChatPromptIn(**body['input'])
+    response = process_prompt(chat_in)
+
     return response

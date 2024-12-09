@@ -7,26 +7,47 @@ type demo @aws_api_key @aws_cognito_user_pools {
 	version: String!
 }
 
+input ChatIn {
+	query: String!
+	userId: String!
+	chatTopicId: String
+}
+
+type ChatOut {
+	response: String!
+	chatTopicId: String
+	userId: String
+	chatId: String
+}
+
+type ChatTopic {
+	entryId: String!
+	title: String!
+	updateDate: String!
+}
+
+type Chat {
+	entryId: String!
+	message: String!
+	type: String!
+	userId: String!
+	chatTopicId: String!
+	updateDate: String!
+}
+
 type Mutation {
 	addDemo(input: DemoInput!): demo @aws_cognito_user_pools(cognito_groups: ["admin"])
-	processRagQuery(input: RagInput!): RagResponse
+	queryChat(input: ChatIn!): ChatOut @aws_api_key
 }
 
 type Query {
 	getDemos: [demo!] @aws_api_key @aws_cognito_user_pools(cognito_groups: ["admin"])
 	getDemosConsistent: [demo!] @aws_api_key @aws_cognito_user_pools(cognito_groups: ["admin"])
+	getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
+	getChats(chatTopicId: String!): [Chat!] @aws_api_key
 }
 
 type Subscription {
-	onRagResponse(id: String!): RagResponse
-		@aws_subscribe(mutations: ["processRagQuery"])
-}
-
-type RagResponse {
-	response: String!
-	status: String!
-}
-
-input RagInput {
-	query: String!
+	onChatResponse(id: String!): ChatOut
+		@aws_subscribe(mutations: ["queryChat"])
 }

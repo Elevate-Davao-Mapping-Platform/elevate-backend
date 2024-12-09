@@ -1028,6 +1028,9 @@ pydantic-core==2.27.1 ; python_version >= "3.12" and python_version < "3.13" \
 pydantic==2.10.3 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:be04d85bbc7b65651c5f8e6b9976ed9c6f41782a55524cef079a34a0bb82144d \
     --hash=sha256:cb5ac360ce894ceacd69c403187900a02c4b20b693a9dd1d643e1effab9eadf9
+pynamodb==6.0.1 ; python_version >= "3.12" and python_version < "3.13" \
+    --hash=sha256:53692d35d5b3fe01e085f260166c869a750a280d40c6af7d48fd67623777faaa \
+    --hash=sha256:c7aacedcf0cbebd14f9ea7e9347f86459b280ec9506ff34ea5981ffdc02d2d59
 pypdf==4.3.1 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:64b31da97eda0771ef22edb1bfecd5deee4b72c3d1736b7df2689805076d6418 \
     --hash=sha256:b2f37fe9a3030aa97ca86067a56ba3f9d3565f9a791b305c7355d8392c30d91b

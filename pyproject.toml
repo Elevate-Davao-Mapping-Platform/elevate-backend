@@ -12,6 +12,7 @@ aws-lambda-powertools = "^2.40.1"
 
 [tool.poetry.group.rag_api.dependencies]
 boto3 = "1.35.76"
+pynamodb = "6.0.1"
 llama-index = "0.11.1"
 llama-index-embeddings-bedrock = "^0.3.0"
 llama-index-vector-stores-pinecone = "^0.2.1"

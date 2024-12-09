@@ -81,9 +81,9 @@ class AppsyncAPI(Construct):
 
         # Create resolver for the processRagQuery mutation
         llm_service_ds.create_resolver(
-            f'{main_resources_name}-{stage}-MutationProcessRagQuery',
+            f'{main_resources_name}-{stage}-MutationQueryChat',
             type_name='Mutation',
-            field_name='processRagQuery',
+            field_name='queryChat',
             request_mapping_template=appsync.MappingTemplate.lambda_request(),
             response_mapping_template=appsync.MappingTemplate.lambda_result(),
         )

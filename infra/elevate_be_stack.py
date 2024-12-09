@@ -6,6 +6,7 @@ from aws_cdk import aws_dynamodb as dynamodb
 from constructs import Construct
 
 from infra.appsync import AppsyncAPI
+from infra.entity_table import EntityTable
 from infra.rag_api import LLMRAGAPI
 
 
@@ -20,6 +21,7 @@ class ElevateBeStack(Stack):
         demo_table = dynamodb.Table(
             self,
             f'{main_resources_name}-{stage}-DemoTable',
+            table_name=f'{main_resources_name}-{stage}-DemoTable',
             partition_key=dynamodb.Attribute(name='id', type=dynamodb.AttributeType.STRING),
         )
 
@@ -90,7 +92,8 @@ class ElevateBeStack(Stack):
         )
 
         # LLM RAG API
-        llm_rag_api = LLMRAGAPI(self, 'LLMRAGAPI')
+        entity_table = EntityTable(self, 'EntityTable')
+        llm_rag_api = LLMRAGAPI(self, 'LLMRAGAPI', entity_table=entity_table)
 
         # Appsync API
         api = AppsyncAPI(

@@ -16,6 +16,8 @@ class LLMRAGAPI(Construct):
         construct_id: str,
         **kwargs,
     ) -> None:
+        self.entity_table = kwargs.pop('entity_table', None)
+
         super().__init__(scope, construct_id)
 
         # Store the inputs
@@ -55,8 +57,17 @@ class LLMRAGAPI(Construct):
             )
         )
 
+        # Add the entity table to the Lambda function environment variables
+        lambda_role.add_to_policy(
+            aws_iam.PolicyStatement(
+                actions=['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
+                resources=[self.entity_table.table_arn],
+            )
+        )
+
         # Create the Lambda function using Docker
         north_virginia_region = 'us-east-1'
+        current_region = os.getenv('AWS_REGION')
         self.lambda_rag_api = lambda_.DockerImageFunction(
             self,
             f'{self.main_resources_name}-llm-service-{self.stage}',
@@ -65,7 +76,7 @@ class LLMRAGAPI(Construct):
                 'lambdas/rag_api',
                 exclude=['*.pyc', '.pytest_cache', '__pycache__'],
             ),
-            timeout=Duration.seconds(120),
+            timeout=Duration.seconds(60 * 5),  # 5 minutes
             memory_size=1024,
             environment={
                 'STAGE': self.stage,
@@ -73,6 +84,8 @@ class LLMRAGAPI(Construct):
                 'POWERTOOLS_SERVICE_NAME': 'llm-service',
                 'POWERTOOLS_LOGGER_LOG_EVENT': 'true',
                 'BEDROCK_AWS_REGION': north_virginia_region,
+                'ENTITIES_TABLE': self.entity_table.table_name,
+                'REGION': current_region,
             },
             architecture=lambda_.Architecture.X86_64,
             role=lambda_role,
