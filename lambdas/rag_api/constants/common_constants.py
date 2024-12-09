@@ -39,5 +39,3 @@ class CommonConstants:
         UPDATED_BY,
         LATEST_VERSION,
     ]
-
-

@@ -1,18 +1,14 @@
 import os
+import uuid
 from datetime import datetime
 from http import HTTPStatus
 from typing import Tuple
 
 import pytz
-import uuid
 from constants.common_constants import EntryStatus
 from models.chat import Chat, ChatIn
 from pynamodb.connection import Connection
-from pynamodb.exceptions import (
-    PutError,
-    PynamoDBConnectionError,
-    TableDoesNotExist,
-)
+from pynamodb.exceptions import PutError, PynamoDBConnectionError, TableDoesNotExist
 from repositories.repository_utils import RepositoryUtils
 from utils.logger import logger
 
@@ -34,7 +30,7 @@ class ChatRepository:
 
         """
         data = RepositoryUtils.load_data(pydantic_schema_in=chat_in)
-        
+
         entry_id = str(uuid.uuid4())
         hash_key = f'{self.core_obj}#{chat_in.userId}'
         range_key = f'v{self.latest_version}#{chat_in.chatTopicId}#{entry_id}'

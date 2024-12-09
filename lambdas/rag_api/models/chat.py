@@ -1,6 +1,6 @@
 from models.entity import Entities
-from pynamodb.attributes import UnicodeAttribute
 from pydantic import BaseModel
+from pynamodb.attributes import UnicodeAttribute
 
 
 class Chat(Entities, discriminator='Chat'):
@@ -12,16 +12,19 @@ class Chat(Entities, discriminator='Chat'):
     userId = UnicodeAttribute(null=False)
     chatTopicId = UnicodeAttribute(null=False)
 
+
 class ChatIn(BaseModel):
     message: str
     type: str
     userId: str
     chatTopicId: str
 
+
 class ChatPromptIn(BaseModel):
     query: str
     userId: str
     chatTopicId: str
+
 
 class ChatOut(BaseModel):
     response: str

@@ -1,6 +1,9 @@
 import os
-from aws_cdk import aws_dynamodb as dynamodb, RemovalPolicy
+
+from aws_cdk import RemovalPolicy
+from aws_cdk import aws_dynamodb as dynamodb
 from constructs import Construct
+
 
 class EntityTable(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -20,4 +23,3 @@ class EntityTable(Construct):
             removal_policy=RemovalPolicy.DESTROY,
         )
         self.table_arn = self.entity_table.table_arn
-        

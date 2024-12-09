@@ -102,6 +102,7 @@ class ElevateBeStack(Stack):
             demo_table=demo_table,
             cognito_user_pool=cognito_user_pool,
             llm_rag_api=llm_rag_api,
+            entity_table=entity_table.entity_table,
         )
 
         # Outputs

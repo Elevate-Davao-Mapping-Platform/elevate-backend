@@ -9,10 +9,10 @@ from constructs import Construct
 
 class AppsyncAPI(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
-        # Extract the custom argument
         demo_table: dynamodb.Table = kwargs.pop('demo_table', None)
         cognito_user_pool: cognito.UserPool = kwargs.pop('cognito_user_pool', None)
-        llm_rag_api = kwargs.pop('llm_rag_api', None)  # Call the base class constructor
+        llm_rag_api = kwargs.pop('llm_rag_api', None)
+        entity_table: dynamodb.Table = kwargs.pop('entity_table', None)
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -86,6 +86,54 @@ class AppsyncAPI(Construct):
             field_name='queryChat',
             request_mapping_template=appsync.MappingTemplate.lambda_request(),
             response_mapping_template=appsync.MappingTemplate.lambda_result(),
+        )
+
+        # Add the DynamoDB table as a data source
+        chat_dS = api.add_dynamo_db_data_source(f'{main_resources_name}-{stage}-ChatDDBsource', entity_table)
+
+        # Resolver for the Query "getChatTopics"
+        chat_dS.create_resolver(
+            f'{main_resources_name}-{stage}-QueryGetChatTopicsResolver',
+            type_name='Query',
+            field_name='getChatTopics',
+            request_mapping_template=appsync.MappingTemplate.from_string(
+                """
+                {
+                    "version": "2017-02-28",
+                    "operation": "Query",
+                    "query": {
+                        "expression": "hashKey = :hashKey",
+                        "expressionValues": {
+                            ":hashKey": $util.dynamodb.toDynamoDBJson("ChatTopic#$context.arguments.userId")
+                        }
+                    }
+                }
+            """
+            ),
+            response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
+        )
+
+        # Resolver for the Query "getChats"
+        chat_dS.create_resolver(
+            f'{main_resources_name}-{stage}-QueryGetChatsResolver',
+            type_name='Query',
+            field_name='getChats',
+            request_mapping_template=appsync.MappingTemplate.from_string(
+                """
+                {
+                    "version": "2017-02-28",
+                    "operation": "Query",
+                    "query": {
+                        "expression": "hashKey = :hashKey and begins_with(rangeKey, :rangeKeyPrefix)",
+                        "expressionValues": {
+                            ":hashKey": $util.dynamodb.toDynamoDBJson("Chat#$context.arguments.userId"),
+                            ":rangeKeyPrefix": $util.dynamodb.toDynamoDBJson("v0#$context.arguments.chatTopicId#")
+                        }
+                    }
+                }
+            """
+            ),
+            response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
         )
 
         # Output values

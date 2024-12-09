@@ -1,8 +1,9 @@
 import os
+import uuid
 from datetime import datetime
 from http import HTTPStatus
 from typing import Tuple
-import uuid
+
 import pytz
 from constants.common_constants import EntryStatus
 from models.chat_topic import ChatTopic, ChatTopicIn
@@ -72,7 +73,7 @@ class ChatTopicRepository:
                 ChatTopic.rangeKey == range_key,
             )
             return HTTPStatus.OK, chat_topic_entry, None
-        
+
         except QueryError as e:
             message = f'Failed to query chat topic: {str(e)}'
             logger.error(f'[{self.core_obj}={chat_topic_id}] {message}')
@@ -82,7 +83,6 @@ class ChatTopicRepository:
             message = f'Error on Table, Please check config to make sure table is created: {str(db_error)}'
             logger.error(f'[{self.core_obj}={chat_topic_id}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
-
 
         except PynamoDBConnectionError as db_error:
             message = f'Connection error occurred, Please check config(region, table name, etc): {str(db_error)}'
