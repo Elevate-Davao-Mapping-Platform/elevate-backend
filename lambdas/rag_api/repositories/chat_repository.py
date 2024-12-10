@@ -81,8 +81,9 @@ class ChatRepository:
                 hash_key=hash_key,
                 range_key_condition=Chat.rangeKey.startswith(range_key),
             )
-            if chats:
-                return HTTPStatus.OK, chats, None
+            chat_list = list(chats)
+            if chat_list:
+                return HTTPStatus.OK, chat_list, None
 
             return HTTPStatus.NOT_FOUND, None, 'Chats not found'
 

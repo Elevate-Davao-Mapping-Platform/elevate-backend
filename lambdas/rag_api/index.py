@@ -99,8 +99,11 @@ def process_prompt(chat_in: ChatPromptIn):
 
     # Check if chat topic exists
     chat_topic_id = chat_in.chatTopicId
-    status, _, message = chat_topic_repository.query_chat_topic(chat_in.userId, chat_in.chatTopicId)
-    if status != HTTPStatus.OK:
+    status = HTTPStatus.OK
+    if chat_topic_id:
+        status, _, message = chat_topic_repository.query_chat_topic(chat_in.userId, chat_topic_id)
+
+    if not chat_topic_id or status != HTTPStatus.OK:
         status, chat_topic, message = chat_topic_repository.store_chat_topic(
             chat_topic_in=ChatTopicIn(
                 userId=chat_in.userId,

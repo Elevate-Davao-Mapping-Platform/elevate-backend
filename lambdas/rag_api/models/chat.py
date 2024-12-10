@@ -1,3 +1,5 @@
+from typing import Optional
+
 from models.entity import Entities
 from pydantic import BaseModel
 from pynamodb.attributes import UnicodeAttribute
@@ -23,7 +25,7 @@ class ChatIn(BaseModel):
 class ChatPromptIn(BaseModel):
     query: str
     userId: str
-    chatTopicId: str
+    chatTopicId: Optional[str] = None
 
 
 class ChatOut(BaseModel):
