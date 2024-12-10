@@ -14,7 +14,6 @@ from pynamodb.exceptions import (
     QueryError,
     TableDoesNotExist,
 )
-from repositories.repository_utils import RepositoryUtils
 from utils.logger import logger
 
 
@@ -27,7 +26,6 @@ class ChatTopicRepository:
     def store_chat_topic(self, chat_topic_in: ChatTopicIn) -> Tuple[HTTPStatus, ChatTopic, str]:
         """Store a new ChatTopic entry."""
         entry_id = str(uuid.uuid4())
-        data = RepositoryUtils.load_data(pydantic_schema_in=chat_topic_in)
         hash_key = f'{self.core_obj}#{chat_topic_in.userId}'
         range_key = f'v{self.latest_version}#{entry_id}'
         current_date = datetime.now(tz=pytz.timezone('Asia/Manila')).isoformat()
@@ -41,7 +39,7 @@ class ChatTopicRepository:
                 latestVersion=self.latest_version,
                 entryStatus=EntryStatus.ACTIVE.value,
                 entryId=entry_id,
-                **data,
+                title=chat_topic_in.title,
             )
             chat_topic_entry.save()
 
@@ -68,12 +66,14 @@ class ChatTopicRepository:
         try:
             hash_key = f'{self.core_obj}#{user_id}'
             range_key = f'v{self.latest_version}#{chat_topic_id}'
+            range_key_condition = ChatTopic.rangeKey == range_key
             chat_topic_entry = ChatTopic.query(
-                ChatTopic.hashKey == hash_key,
-                ChatTopic.rangeKey == range_key,
+                hash_key=hash_key,
+                range_key_condition=range_key_condition,
             )
-            if chat_topic_entry:
-                return HTTPStatus.OK, chat_topic_entry, None
+            chat_result = list(chat_topic_entry)
+            if chat_result or len(chat_result) > 0:
+                return HTTPStatus.OK, chat_result[0], None
 
             return HTTPStatus.NOT_FOUND, None, 'Chat topic not found'
 
