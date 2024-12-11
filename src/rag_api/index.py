@@ -107,7 +107,7 @@ def process_prompt(chat_in: ChatPromptIn):
         status, chat_topic, message = chat_topic_repository.store_chat_topic(
             chat_topic_in=ChatTopicIn(
                 userId=chat_in.userId,
-                title=chat_in.chatTopicId,
+                title=chat_in.query,
             )
         )
         if status != HTTPStatus.OK:

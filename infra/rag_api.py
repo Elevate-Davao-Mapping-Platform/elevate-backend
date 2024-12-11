@@ -78,7 +78,7 @@ class LLMRAGAPI(Construct):
             f'{self.main_resources_name}-llm-service-{self.stage}',
             function_name=f'{self.main_resources_name}-llm-service-{self.stage}',
             code=lambda_.DockerImageCode.from_image_asset(
-                'lambdas/rag_api',
+                'src/rag_api',
                 exclude=['*.pyc', '.pytest_cache', '__pycache__'],
             ),
             timeout=Duration.seconds(60 * 5),  # 5 minutes
