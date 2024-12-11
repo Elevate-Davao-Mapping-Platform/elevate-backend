@@ -131,7 +131,7 @@ def process_prompt(chat_in: ChatPromptIn):
     # Store the query chat
     user_prompt_chat_in = ChatIn(
         userId=chat_in.userId,
-        chatTopicId=chat_in.chatTopicId,
+        chatTopicId=chat_topic_id,
         message=chat_in.query,
         type=ChatType.USER_PROMPT.value,
     )
@@ -147,7 +147,7 @@ def process_prompt(chat_in: ChatPromptIn):
     # Store the response chat
     llm_response_chat_in = ChatIn(
         userId=chat_in.userId,
-        chatTopicId=chat_in.chatTopicId,
+        chatTopicId=chat_topic_id,
         message=llm_response['response'],
         type=ChatType.LLM_RESPONSE.value,
     )
@@ -162,7 +162,7 @@ def process_prompt(chat_in: ChatPromptIn):
 
     return ChatOut(
         response=llm_response['response'],
-        chatTopicId=chat_in.chatTopicId,
+        chatTopicId=chat_topic_id,
         userId=chat_in.userId,
         chatId=user_prompt_chat.entryId,
     ).model_dump()
