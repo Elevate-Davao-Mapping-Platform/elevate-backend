@@ -1,6 +1,6 @@
 import os
 
-from aws_cdk import CfnOutput, Duration, Stack, RemovalPolicy
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_iam as iam
@@ -159,10 +159,7 @@ class ElevateBeStack(Stack):
                 effect=iam.Effect.ALLOW,
                 principals=[iam.ArnPrincipal(cognito_authenticated_role.role_arn)],
                 actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
-                resources=[
-                    general_bucket.bucket_arn,
-                    f'{general_bucket.bucket_arn}/*'
-                ],
+                resources=[general_bucket.bucket_arn, f'{general_bucket.bucket_arn}/*'],
             )
         )
 
