@@ -1,6 +1,6 @@
 import os
 
-from aws_cdk import CfnOutput, Duration, Stack
+from aws_cdk import CfnOutput, Duration, Stack, RemovalPolicy
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_iam as iam
@@ -107,14 +107,15 @@ class ElevateBeStack(Stack):
             entity_table=entity_table.entity_table,
         )
 
-        resource_hash = 'gwzjn89n'
+        resource_hash = 'gwzjn89p'
         general_bucket_name = f'{main_resources_name}-{stage}-general-bucket-{resource_hash}'
 
         general_bucket = s3.Bucket(
             self,
             'GeneralBucket',
             bucket_name=general_bucket_name,
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.RETAIN,
+            auto_delete_objects=False,
         )
 
         # Cognito Identity Pool for IAM Role-based Authentication
@@ -158,7 +159,10 @@ class ElevateBeStack(Stack):
                 effect=iam.Effect.ALLOW,
                 principals=[iam.ArnPrincipal(cognito_authenticated_role.role_arn)],
                 actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
-                resources=[f'{general_bucket.bucket_arn}/*'],
+                resources=[
+                    general_bucket.bucket_arn,
+                    f'{general_bucket.bucket_arn}/*'
+                ],
             )
         )
 
