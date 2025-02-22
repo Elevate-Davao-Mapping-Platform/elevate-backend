@@ -3,6 +3,8 @@ import os
 from aws_cdk import CfnOutput, Duration, Stack
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_s3 as s3
 from constructs import Construct
 
 from infra.appsync import AppsyncAPI
@@ -105,6 +107,61 @@ class ElevateBeStack(Stack):
             entity_table=entity_table.entity_table,
         )
 
+        resource_hash = 'gwzjn89n'
+        general_bucket_name = f'{main_resources_name}-{stage}-general-bucket-{resource_hash}'
+
+        general_bucket = s3.Bucket(
+            self,
+            'GeneralBucket',
+            bucket_name=general_bucket_name,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+        )
+
+        # Cognito Identity Pool for IAM Role-based Authentication
+        cognito_identity_pool = cognito.CfnIdentityPool(
+            self,
+            'ElevateIdentityPool',
+            allow_unauthenticated_identities=False,  # Only authenticated users
+            cognito_identity_providers=[
+                {
+                    'clientId': cognito_user_pool_client.user_pool_client_id,
+                    'providerName': cognito_user_pool.user_pool_provider_name,
+                }
+            ],
+        )
+
+        # IAM Role for Authenticated Cognito Users
+        cognito_authenticated_role = iam.Role(
+            self,
+            'CognitoAuthenticatedRole',
+            assumed_by=iam.FederatedPrincipal(
+                'cognito-identity.amazonaws.com',
+                {
+                    'StringEquals': {'cognito-identity.amazonaws.com:aud': cognito_identity_pool.ref},
+                    'ForAnyValue:StringLike': {'cognito-identity.amazonaws.com:amr': 'authenticated'},
+                },
+                'sts:AssumeRoleWithWebIdentity',
+            ),
+        )
+
+        # Attach IAM policy to allow S3 access
+        cognito_authenticated_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
+                resources=[f'{general_bucket.bucket_arn}/*'],
+            )
+        )
+
+        general_bucket.add_to_resource_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                principals=[iam.ArnPrincipal(cognito_authenticated_role.role_arn)],
+                actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
+                resources=[f'{general_bucket.bucket_arn}/*'],
+            )
+        )
+
         # Outputs
         CfnOutput(self, 'GraphQLAPIID', value=api.api_id)
         CfnOutput(self, 'GraphQLAPIURL', value=api.graphql_url)
@@ -120,4 +177,9 @@ class ElevateBeStack(Stack):
             'AppClientId',
             value=cognito_user_pool_client.user_pool_client_id,
             export_name=f'AppClientId-{stage}',
+        )
+        CfnOutput(
+            self,
+            'GeneralBucketName',
+            value=general_bucket.bucket_name,
         )
