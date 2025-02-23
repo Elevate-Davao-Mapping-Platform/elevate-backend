@@ -107,6 +107,7 @@ class ElevateBeStack(Stack):
             entity_table=entity_table.entity_table,
         )
 
+        # General Bucket
         resource_hash = 'gwzjn89p'
         general_bucket_name = f'{main_resources_name}-{stage}-general-bucket-{resource_hash}'
 
@@ -116,6 +117,22 @@ class ElevateBeStack(Stack):
             bucket_name=general_bucket_name,
             removal_policy=RemovalPolicy.RETAIN,
             auto_delete_objects=False,
+            cors=[
+                # TODO: Update to least privelege
+                s3.CorsRule(
+                    allowed_headers=['*'],
+                    allowed_methods=[
+                        s3.HttpMethods.GET,
+                        s3.HttpMethods.HEAD,
+                        s3.HttpMethods.PUT,
+                        s3.HttpMethods.POST,
+                        s3.HttpMethods.DELETE,
+                    ],
+                    allowed_origins=['*'],
+                    exposed_headers=['x-amz-server-side-encryption', 'x-amz-request-id', 'x-amz-id-2', 'ETag'],
+                    max_age=3000,
+                )
+            ],
         )
 
         # Cognito Identity Pool for IAM Role-based Authentication
@@ -143,6 +160,16 @@ class ElevateBeStack(Stack):
                 },
                 'sts:AssumeRoleWithWebIdentity',
             ),
+        )
+
+        # Attach Authenticated Role to Identity Pool
+        cognito.CfnIdentityPoolRoleAttachment(
+            self,
+            'IdentityPoolRoleAttachment',
+            identity_pool_id=cognito_identity_pool.ref,
+            roles={
+                'authenticated': cognito_authenticated_role.role_arn,
+            },
         )
 
         # Attach IAM policy to allow S3 access
@@ -183,4 +210,9 @@ class ElevateBeStack(Stack):
             self,
             'GeneralBucketName',
             value=general_bucket.bucket_name,
+        )
+        CfnOutput(
+            self,
+            'IdentityPoolId',
+            value=cognito_identity_pool.attr_id,
         )
