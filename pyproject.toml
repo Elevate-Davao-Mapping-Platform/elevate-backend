@@ -23,6 +23,8 @@ aws-cdk-lib = "2.171.1"
 constructs = "^10.4.2"
 aws-cdk-aws-lambda-python-alpha = "2.171.1a0"
 python-dotenv = "1.0.1"
+pre-commit = "^4.1.0"
+shortuuid = "^1.0.13"
 
 [tool.poetry.group.format.dependencies]
 pytest = "6.2.5"
