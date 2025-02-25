@@ -139,6 +139,7 @@ class ElevateBeStack(Stack):
         cognito_identity_pool = cognito.CfnIdentityPool(
             self,
             'ElevateIdentityPool',
+            identity_pool_name=f'{main_resources_name}-{stage}-IdentityPool',
             allow_unauthenticated_identities=False,  # Only authenticated users
             cognito_identity_providers=[
                 {
@@ -152,6 +153,7 @@ class ElevateBeStack(Stack):
         cognito_authenticated_role = iam.Role(
             self,
             'CognitoAuthenticatedRole',
+            role_name=f'{main_resources_name}-{stage}-CognitoAuthenticatedRole',
             assumed_by=iam.FederatedPrincipal(
                 'cognito-identity.amazonaws.com',
                 {
