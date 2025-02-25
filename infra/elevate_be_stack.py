@@ -25,6 +25,8 @@ class ElevateBeStack(Stack):
             f'{main_resources_name}-{stage}-DemoTable',
             table_name=f'{main_resources_name}-{stage}-DemoTable',
             partition_key=dynamodb.Attribute(name='id', type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         # Cognito User Pool
