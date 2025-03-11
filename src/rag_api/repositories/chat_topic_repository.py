@@ -62,7 +62,9 @@ class ChatTopicRepository:
             logger.info(f'[{self.core_obj} = {entry_id}]: Save ChatTopic Entry Successful')
             return HTTPStatus.OK, chat_topic_entry, None
 
-    def query_chat_topic(self, user_id: str, chat_topic_id: str) -> Tuple[HTTPStatus, ChatTopic, str]:
+    def query_chat_topic(
+        self, user_id: str, chat_topic_id: str
+    ) -> Tuple[HTTPStatus, ChatTopic, str]:
         try:
             hash_key = f'{self.core_obj}#{user_id}'
             range_key = f'v{self.latest_version}#{chat_topic_id}'
