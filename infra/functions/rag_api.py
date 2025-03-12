@@ -1,8 +1,8 @@
-import os
-
 from aws_cdk import CfnOutput, Duration, aws_iam
 from aws_cdk import aws_lambda as lambda_
 from constructs import Construct
+
+from infra.config import Config
 
 
 class LLMRAGAPI(Construct):
@@ -14,6 +14,7 @@ class LLMRAGAPI(Construct):
         self,
         scope: Construct,
         construct_id: str,
+        config: Config,
         **kwargs,
     ) -> None:
         self.entity_table = kwargs.pop('entity_table', None)
@@ -22,8 +23,10 @@ class LLMRAGAPI(Construct):
 
         # Store the inputs
         self.construct_id = construct_id
-        self.main_resources_name = os.environ['RESOURCE_NAME']
-        self.stage = os.environ['DEPLOYMENT_ENVIRONMENT']
+        self.main_resources_name = config.main_resources_name
+        self.stage = config.stage
+        self.region = config.region
+        self.bedrock_region = config.bedrock_region
 
         # Create resources
         self.create_lambda_function()
@@ -40,8 +43,12 @@ class LLMRAGAPI(Construct):
             'LambdaExecutionRole',
             assumed_by=aws_iam.ServicePrincipal('lambda.amazonaws.com'),
             managed_policies=[
-                aws_iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaBasicExecutionRole'),
-                aws_iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaVPCAccessExecutionRole'),
+                aws_iam.ManagedPolicy.from_aws_managed_policy_name(
+                    'service-role/AWSLambdaBasicExecutionRole'
+                ),
+                aws_iam.ManagedPolicy.from_aws_managed_policy_name(
+                    'service-role/AWSLambdaVPCAccessExecutionRole'
+                ),
             ],
         )
 
@@ -71,8 +78,8 @@ class LLMRAGAPI(Construct):
         )
 
         # Create the Lambda function using Docker
-        north_virginia_region = 'us-east-1'
-        current_region = os.getenv('AWS_REGION')
+        north_virginia_region = self.bedrock_region
+        current_region = self.region
         self.lambda_rag_api = lambda_.DockerImageFunction(
             self,
             f'{self.main_resources_name}-llm-service-{self.stage}',

@@ -57,7 +57,9 @@ def generate_response(chat_in: ChatPromptIn, chat_history_context: str):
         )
 
         # Create a vector store index
-        index = VectorStoreIndex.from_vector_store(vector_store=vector_store, embed_model=embed_model)
+        index = VectorStoreIndex.from_vector_store(
+            vector_store=vector_store, embed_model=embed_model
+        )
 
         # Initialize the language model
         llm = Bedrock(
