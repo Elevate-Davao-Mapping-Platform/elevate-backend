@@ -1,9 +1,9 @@
-import os
-
 from aws_cdk import CfnOutput, Duration, aws_iam
 from aws_cdk import aws_lambda as lambda_
 from constructs import Construct
+
 from infra.config import Config
+
 
 class LLMRAGAPI(Construct):
     """
@@ -43,8 +43,12 @@ class LLMRAGAPI(Construct):
             'LambdaExecutionRole',
             assumed_by=aws_iam.ServicePrincipal('lambda.amazonaws.com'),
             managed_policies=[
-                aws_iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaBasicExecutionRole'),
-                aws_iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaVPCAccessExecutionRole'),
+                aws_iam.ManagedPolicy.from_aws_managed_policy_name(
+                    'service-role/AWSLambdaBasicExecutionRole'
+                ),
+                aws_iam.ManagedPolicy.from_aws_managed_policy_name(
+                    'service-role/AWSLambdaVPCAccessExecutionRole'
+                ),
             ],
         )
 

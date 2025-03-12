@@ -1,7 +1,9 @@
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_iam as iam
 from constructs import Construct
+
 from infra.config import Config
+
 
 class IdentityPoolConstruct(Construct):
     def __init__(
@@ -11,7 +13,7 @@ class IdentityPoolConstruct(Construct):
         config: Config,
         user_pool_client: cognito.UserPoolClient,
         user_pool_provider_name: str,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(scope, id, **kwargs)
         main_resources_name = config.main_resources_name
@@ -40,7 +42,9 @@ class IdentityPoolConstruct(Construct):
                 'cognito-identity.amazonaws.com',
                 {
                     'StringEquals': {'cognito-identity.amazonaws.com:aud': self.identity_pool.ref},
-                    'ForAnyValue:StringLike': {'cognito-identity.amazonaws.com:amr': 'authenticated'},
+                    'ForAnyValue:StringLike': {
+                        'cognito-identity.amazonaws.com:amr': 'authenticated'
+                    },
                 },
                 'sts:AssumeRoleWithWebIdentity',
             ),
@@ -54,4 +58,4 @@ class IdentityPoolConstruct(Construct):
             roles={
                 'authenticated': self.authenticated_role.role_arn,
             },
-        ) 
+        )

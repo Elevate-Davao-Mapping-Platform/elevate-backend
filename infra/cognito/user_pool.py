@@ -1,6 +1,7 @@
 from aws_cdk import Duration
 from aws_cdk import aws_cognito as cognito
 from constructs import Construct
+
 from infra.config import Config
 
 
@@ -41,7 +42,9 @@ class UserPoolConstruct(Construct):
         self.user_pool_client = self.user_pool.add_client(
             'UserPoolClient',
             user_pool_client_name=f'{main_resources_name}-{stage}-UserPoolClient',
-            auth_flows=cognito.AuthFlow(admin_user_password=True, user_password=True, custom=True, user_srp=True),
+            auth_flows=cognito.AuthFlow(
+                admin_user_password=True, user_password=True, custom=True, user_srp=True
+            ),
             o_auth=cognito.OAuthSettings(
                 flows=cognito.OAuthFlows(authorization_code_grant=True, implicit_code_grant=True),
                 scopes=[
@@ -76,4 +79,4 @@ class UserPoolConstruct(Construct):
             description='Super Administrator',
             group_name='super_admin',
             user_pool_id=self.user_pool.user_pool_id,
-        ) 
+        )

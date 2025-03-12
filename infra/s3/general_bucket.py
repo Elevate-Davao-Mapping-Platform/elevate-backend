@@ -1,17 +1,14 @@
 from aws_cdk import RemovalPolicy
-from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_s3 as s3
 from constructs import Construct
+
 from infra.config import Config
+
 
 class GeneralBucketConstruct(Construct):
     def __init__(
-        self, 
-        scope: Construct, 
-        id: str, 
-        config: Config,
-        resource_hash: str = 'gwzjn89p',
-        **kwargs
+        self, scope: Construct, id: str, config: Config, resource_hash: str = 'gwzjn89p', **kwargs
     ) -> None:
         super().__init__(scope, id, **kwargs)
 
@@ -42,7 +39,7 @@ class GeneralBucketConstruct(Construct):
                         'x-amz-server-side-encryption',
                         'x-amz-request-id',
                         'x-amz-id-2',
-                        'ETag'
+                        'ETag',
                     ],
                     max_age=3000,
                 )
@@ -67,4 +64,4 @@ class GeneralBucketConstruct(Construct):
                 actions=['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
                 resources=[self.bucket.bucket_arn, f'{self.bucket.bucket_arn}/*'],
             )
-        ) 
+        )

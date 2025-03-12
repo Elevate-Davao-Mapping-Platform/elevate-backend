@@ -1,4 +1,3 @@
-import os
 from os import path
 from typing import Optional
 
@@ -6,6 +5,7 @@ from aws_cdk import aws_appsync as appsync
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
 from constructs import Construct
+
 from infra.config import Config
 
 
@@ -25,7 +25,7 @@ class AppsyncAPI(Construct):
 
         self.config = config
         self.api = self._create_api(cognito_user_pool)
-        
+
         # Set up data sources and resolvers
         self._setup_llm_resolvers(llm_rag_api)
         self._setup_chat_resolvers(entity_table)
@@ -79,8 +79,7 @@ class AppsyncAPI(Construct):
     def _setup_chat_resolvers(self, entity_table: dynamodb.Table) -> None:
         """Sets up DynamoDB data source and resolvers for chat functionality."""
         chat_ds = self.api.add_dynamo_db_data_source(
-            f'{self.config.main_resources_name}-{self.config.stage}-ChatDDBsource', 
-            entity_table
+            f'{self.config.main_resources_name}-{self.config.stage}-ChatDDBsource', entity_table
         )
 
         # Resolver for getChatTopics

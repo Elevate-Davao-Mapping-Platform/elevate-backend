@@ -1,7 +1,9 @@
 from aws_cdk import RemovalPolicy
 from aws_cdk import aws_dynamodb as dynamodb
 from constructs import Construct
+
 from infra.config import Config
+
 
 class EntityTable(Construct):
     def __init__(self, scope: Construct, construct_id: str, config: Config, **kwargs) -> None:
