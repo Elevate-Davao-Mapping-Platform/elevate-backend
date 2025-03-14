@@ -1,41 +1,150 @@
-input ChatIn {
-	query: String!
-	userId: String!
-	chatTopicId: String
+# Common input types
+input LatLngInput {
+    lat: Float
+    lng: Float
 }
 
-type ChatOut {
-	response: String!
-	chatTopicId: String
-	userId: String
-	chatId: String
+input LocationInput {
+    address: String
+    latlng: LatLngInput
+}
+
+input ContactInput {
+    platform: String!
+    value: String!
+}
+
+# Common object types
+type LatLng {
+    lat: Float
+    lng: Float
+}
+
+type Location {
+    address: String
+    latlng: LatLng
+}
+
+type Contact {
+    platform: String!
+    value: String!
+}
+
+# Chat related types
+type Chat {
+    entryId: String!
+    message: String!
+    type: String!
+    userId: String!
+    chatTopicId: String!
+    updateDate: String!
 }
 
 type ChatTopic {
-	entryId: String!
-	title: String!
-	updateDate: String!
+    entryId: String!
+    title: String!
+    updateDate: String!
 }
 
-type Chat {
-	entryId: String!
-	message: String!
-	type: String!
-	userId: String!
-	chatTopicId: String!
-	updateDate: String!
+type ChatOut {
+    response: String!
+    chatTopicId: String
+    userId: String
+    chatId: String
+}
+
+input ChatIn {
+    query: String!
+    userId: String!
+    chatTopicId: String
+}
+
+# Startup related types
+type Milestone {
+    milestoneId: Int!
+    title: String!
+    dateAchieved: String!
+    description: String
+}
+
+input MilestoneInput {
+    milestoneId: Int!
+    title: String!
+    dateAchieved: String!
+    description: String
+}
+
+type Founder {
+    founderId: Int!
+    name: String!
+    role: String!
+    dateJoined: String!
+    overview: String!
+    photoObjectkey: String!
+    contacts: [Contact!]!
+}
+
+input FounderInput {
+    founderId: Int!
+    name: String!
+    role: String!
+    dateJoined: String!
+    overview: String!
+    photoObjectkey: String!
+    contacts: [ContactInput!]!
+}
+
+type Startup {
+    startupId: String!
+    startUpName: String
+    email: String
+    logoObjectKey: String
+    dateFounded: String
+    industry: [String!]
+    startupStage: String
+    description: String
+    location: Location
+    contacts: [Contact!]
+    revenueModel: [String!]
+    milestones: [Milestone!]
+    founders: [Founder!]
+}
+
+input CreateUpdateStartupInput {
+    startupId: String
+    startUpName: String
+    email: String
+    logoObjectKey: String
+    dateFounded: String
+    startupStage: String
+    description: String
+    revenueModel: [String!]
+    location: LocationInput
+    industry: [String!]
+    contacts: [ContactInput!]
+    milestones: [MilestoneInput!]
+    founders: [FounderInput!]
+}
+
+type MutationResponse {
+    startupId: String
+	message: String
+	success: Boolean
+}
+
+# Root types
+type Query {
+    getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
+    getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
+	getStartup(startupId: String!): Startup! @aws_api_key
 }
 
 type Mutation {
-	queryChat(input: ChatIn!): ChatOut @aws_api_key
-}
-
-type Query {
-	getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
-	getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
+    queryChat(input: ChatIn!): ChatOut @aws_api_key
+    createUpdateStartup(input: CreateUpdateStartupInput!): MutationResponse! @aws_api_key
 }
 
 type Subscription {
-	onChatResponse(id: String!): ChatOut
-		@aws_subscribe(mutations: ["queryChat"])
+    onChatResponse(id: String!): ChatOut
+        @aws_subscribe(mutations: ["queryChat"])
 }

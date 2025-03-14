@@ -1,6 +1,7 @@
 from os import path
 from typing import Optional
 
+import aws_cdk.aws_logs as logs
 from aws_cdk import aws_appsync as appsync
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
@@ -29,6 +30,7 @@ class AppsyncAPI(Construct):
         # Set up data sources and resolvers
         self._setup_llm_resolvers(llm_rag_api)
         self._setup_chat_resolvers(entity_table)
+        self._setup_startup_resolvers(entity_table)
 
         # Store API outputs
         self.graphql_url = self.api.graphql_url
@@ -58,7 +60,12 @@ class AppsyncAPI(Construct):
                     ),
                 ],
             ),
-            xray_enabled=True,
+            xray_enabled=False,
+            log_config=appsync.LogConfig(
+                exclude_verbose_content=False,
+                field_log_level=appsync.FieldLogLevel.ALL,
+                retention=logs.RetentionDays.ONE_WEEK,
+            ),
         )
 
     def _setup_llm_resolvers(self, llm_rag_api) -> None:
@@ -81,48 +88,50 @@ class AppsyncAPI(Construct):
         chat_ds = self.api.add_dynamo_db_data_source(
             f'{self.config.main_resources_name}-{self.config.stage}-ChatDDBsource', entity_table
         )
+        folder_root = './infra/appsync/appsync_js/chats'
 
         # Resolver for getChatTopics
+        get_chat_topics_js = f'{folder_root}/getChatTopics.js'
         chat_ds.create_resolver(
             f'{self.config.main_resources_name}-{self.config.stage}-QueryGetChatTopicsResolver',
             type_name='Query',
             field_name='getChatTopics',
-            request_mapping_template=appsync.MappingTemplate.from_string(
-                """
-                {
-                    "version": "2017-02-28",
-                    "operation": "Query",
-                    "query": {
-                        "expression": "hashKey = :hashKey",
-                        "expressionValues": {
-                            ":hashKey": $util.dynamodb.toDynamoDBJson("ChatTopic#$context.arguments.userId")
-                        }
-                    }
-                }
-                """
-            ),
-            response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
+            code=appsync.Code.from_asset(get_chat_topics_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
         # Resolver for getChats
+        get_chats_js = f'{folder_root}/getChats.js'
         chat_ds.create_resolver(
             f'{self.config.main_resources_name}-{self.config.stage}-QueryGetChatsResolver',
             type_name='Query',
             field_name='getChats',
-            request_mapping_template=appsync.MappingTemplate.from_string(
-                """
-                {
-                    "version": "2017-02-28",
-                    "operation": "Query",
-                    "query": {
-                        "expression": "hashKey = :hashKey and begins_with(rangeKey, :rangeKeyPrefix)",
-                        "expressionValues": {
-                            ":hashKey": $util.dynamodb.toDynamoDBJson("Chat#$context.arguments.userId"),
-                            ":rangeKeyPrefix": $util.dynamodb.toDynamoDBJson("v0#$context.arguments.chatTopicId#")
-                        }
-                    }
-                }
-                """
-            ),
-            response_mapping_template=appsync.MappingTemplate.dynamo_db_result_list(),
+            code=appsync.Code.from_asset(get_chats_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+    def _setup_startup_resolvers(self, entity_table: dynamodb.Table) -> None:
+        """Sets up DynamoDB data source and resolvers for startup functionality."""
+        startup_ds = self.api.add_dynamo_db_data_source(
+            f'{self.config.main_resources_name}-{self.config.stage}-StartupDDBsource', entity_table
+        )
+
+        folder_root = './infra/appsync/appsync_js/startups'
+
+        create_startup_js = f'{folder_root}/createUpdateStartup.js'
+        startup_ds.create_resolver(
+            f'{self.config.main_resources_name}-{self.config.stage}-MutationCreateUpdateStartupResolver',
+            type_name='Mutation',
+            field_name='createUpdateStartup',
+            code=appsync.Code.from_asset(create_startup_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        query_startup_js = f'{folder_root}/getStartup.js'
+        startup_ds.create_resolver(
+            f'{self.config.main_resources_name}-{self.config.stage}-QueryGetStartupResolver',
+            type_name='Query',
+            field_name='getStartup',
+            code=appsync.Code.from_asset(query_startup_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
