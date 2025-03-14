@@ -36,6 +36,15 @@ class UserPoolConstruct(Construct):
                 'phone_number': cognito.StringAttribute(mutable=True),
             },
             sign_in_case_sensitive=False,
+            # email=cognito.UserPoolEmail.with_ses(
+            #     from_email="noreply@elevate-davao.live",
+            #     from_name="Elevate Davao",
+            #     reply_to="support@elevate-davao.live"
+            # ),
+            # user_verification=cognito.UserVerificationConfig(
+            #     email_body="Welcome to Elevate Davao! Please verify your email by clicking the link below: {##Verify Email##}",
+            #     email_subject="Elevate Davao - Verify Your Email",
+            # )
         )
 
         # User Pool Client
