@@ -135,3 +135,12 @@ class AppsyncAPI(Construct):
             code=appsync.Code.from_asset(query_startup_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
+
+        query_startup_list_js = f'{folder_root}/getStartupList.js'
+        startup_ds.create_resolver(
+            f'{self.config.main_resources_name}-{self.config.stage}-QueryGetStartupListResolver',
+            type_name='Query',
+            field_name='getStartupList',
+            code=appsync.Code.from_asset(query_startup_list_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )

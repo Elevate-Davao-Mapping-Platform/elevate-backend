@@ -22,4 +22,11 @@ class EntityTable(Construct):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             removal_policy=RemovalPolicy.DESTROY,
         )
+        self.entity_table.add_global_secondary_index(
+            index_name='GSI1PK',
+            partition_key=dynamodb.Attribute(name='GSI1PK', type=dynamodb.AttributeType.STRING),
+            projection_type=dynamodb.ProjectionType.ALL,
+            sort_key=dynamodb.Attribute(name='rangeKey', type=dynamodb.AttributeType.STRING),
+        )
+
         self.table_arn = self.entity_table.table_arn

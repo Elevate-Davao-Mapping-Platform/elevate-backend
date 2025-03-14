@@ -108,6 +108,7 @@ type Startup {
     revenueModel: [String!]
     milestones: [Milestone!]
     founders: [Founder!]
+    createdAt: String
 }
 
 input CreateUpdateStartupInput {
@@ -126,6 +127,11 @@ input CreateUpdateStartupInput {
     founders: [FounderInput!]
 }
 
+enum EntityType {
+    STARTUP
+    ENABLER
+}
+
 type MutationResponse {
     startupId: String
 	message: String
@@ -137,6 +143,7 @@ type Query {
     getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
     getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
 	getStartup(startupId: String!): Startup! @aws_api_key
+    getStartupList(entityType: String): [Startup!] @aws_api_key
 }
 
 type Mutation {
@@ -145,6 +152,6 @@ type Mutation {
 }
 
 type Subscription {
-    onChatResponse(id: String!): ChatOut
+    onChatResponse(id: EntityType!): ChatOut
         @aws_subscribe(mutations: ["queryChat"])
 }
