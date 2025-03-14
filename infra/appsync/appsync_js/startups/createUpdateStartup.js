@@ -4,6 +4,8 @@ export function request(ctx) {
     const startupId = ctx.args.input.startupId || util.autoId();
     const tableName = 'elevate-dev-EntityTable';
     const transactItems = [];
+    const createdAt = util.time.nowISO8601()
+    const ksuid = util.autoKsuid()
 
     // Metadata item - use UpdateItem if startupId exists, otherwise PutItem
     if (ctx.args.input.startupId) {
@@ -35,7 +37,7 @@ export function request(ctx) {
             operation: 'UpdateItem',
             key: util.dynamodb.toMapValues({
                 hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'METADATA'
+                rangeKey: 'STARTUP#METADATA'
             }),
             update: {
                 expression: `SET ${updateExpression.join(', ')}`,
@@ -50,7 +52,7 @@ export function request(ctx) {
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
                 hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'METADATA'
+                rangeKey: 'STARTUP#METADATA'
             }),
             attributeValues: util.dynamodb.toMapValues({
                 startupId,
@@ -62,6 +64,8 @@ export function request(ctx) {
                 description: ctx.args.input.description,
                 revenueModel: ctx.args.input.revenueModel,
                 location: ctx.args.input.location,
+                GSI1PK: ksuid,
+                createdAt
             })
         });
     }
@@ -74,10 +78,12 @@ export function request(ctx) {
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
                 hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'FOUNDERS'
+                rangeKey: 'STARTUP#FOUNDERS'
             }),
             attributeValues: util.dynamodb.toMapValues({
-                founders: founders
+                founders: founders,
+                GSI1PK: ksuid,
+                ...(ctx.args.input.startupId && { createdAt })
             })
         });
     }
@@ -90,10 +96,12 @@ export function request(ctx) {
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
                 hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'CONTACTS'
+                rangeKey: 'STARTUP#CONTACTS'
             }),
             attributeValues: util.dynamodb.toMapValues({
-                contacts: contacts
+                contacts: contacts,
+                GSI1PK: ksuid,
+                ...(ctx.args.input.startupId && { createdAt })
             })
         });
     }
@@ -109,7 +117,9 @@ export function request(ctx) {
                 rangeKey: 'MILESTONES'
             }),
             attributeValues: util.dynamodb.toMapValues({
-                milestones: milestones
+                milestones: milestones,
+                GSI1PK: ksuid,
+                ...(ctx.args.input.startupId && { createdAt })
             })
         });
     }
@@ -121,10 +131,12 @@ export function request(ctx) {
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
                 hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'INDUSTRIES'
+                rangeKey: 'STARTUP#INDUSTRIES'
             }),
             attributeValues: util.dynamodb.toMapValues({
-                industries: industries
+                industries: industries,
+                GSI1PK: ksuid,
+                ...(ctx.args.input.startupId && { createdAt })
             })
         });
     }

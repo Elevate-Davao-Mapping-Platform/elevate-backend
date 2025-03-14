@@ -7,14 +7,8 @@ import { util } from "@aws-appsync/utils";
  */
 export function request(ctx) {
     return {
-        operation: "Query",
-        query: {
-            expression:
-                "hashKey = :hashKey",
-            expressionValues: util.dynamodb.toMapValues({
-                ":hashKey": `STARTUP#${ctx.args.startupId}`,
-            }),
-        },
+        operation: "Scan",
+        index: "GSI1PK"
     };
 }
 
@@ -29,18 +23,27 @@ export function response(ctx) {
     }
 
     const items = ctx.result.items;
-    const startupId = ctx.arguments.startupId;
+    const startups = [];
+    let currentStartup = null;
+    let currentStartupId = null;
 
-    // Initialize the startup object
-    const startup = {
-        startupId: startupId,
-    };
-
-    // Process each item based on its rangeKey
+    // Process items sequentially, assuming related items are adjacent
     items.forEach(item => {
+        const startupId = item.hashKey.split('#')[1];
+
+        // If this is a new startup, create a new startup object
+        if (startupId !== currentStartupId) {
+            if (currentStartup) {
+                startups.push(currentStartup);
+            }
+            currentStartup = { startupId };
+            currentStartupId = startupId;
+        }
+
+        // Add item data to current startup based on rangeKey
         switch (item.rangeKey) {
             case 'STARTUP#METADATA':
-                Object.assign(startup, {
+                Object.assign(currentStartup, {
                     startUpName: item.startUpName,
                     email: item.email,
                     logoObjectKey: item.logoObjectKey,
@@ -53,19 +56,24 @@ export function response(ctx) {
                 });
                 break;
             case 'STARTUP#CONTACTS':
-                startup.contacts = item.contacts;
+                currentStartup.contacts = item.contacts;
                 break;
             case 'STARTUP#INDUSTRIES':
-                startup.industry = item.industries;
+                currentStartup.industry = item.industries;
                 break;
-            case 'STARTUP#MILESTONES':
-                startup.milestones = item.milestones;
+            case 'MILESTONES':
+                currentStartup.milestones = item.milestones;
                 break;
             case 'STARTUP#FOUNDERS':
-                startup.founders = item.founders;
+                currentStartup.founders = item.founders;
                 break;
         }
     });
 
-    return startup;
+    // Add the last startup if exists
+    if (currentStartup) {
+        startups.push(currentStartup);
+    }
+
+    return startups;
 }
