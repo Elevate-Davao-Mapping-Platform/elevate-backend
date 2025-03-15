@@ -109,6 +109,7 @@ type Startup {
     milestones: [Milestone!]
     founders: [Founder!]
     createdAt: String
+    suggestions: [Suggestion]
 }
 
 input CreateUpdateStartupInput {
@@ -127,28 +128,110 @@ input CreateUpdateStartupInput {
     founders: [FounderInput!]
 }
 
+type InvestmentCriteria {
+  criteriaName: String!
+  details: String
+}
+
+input InvestmentCriteriaInput {
+  criteriaName: String!
+  details: String
+}
+
+type PortfolioItem {
+  supportedStartupProject: String!
+  supportMonth: String
+  supportYear: String
+  isSupportingToPresent: Boolean
+  roleAndImpact: String
+}
+
+input PortfolioItemInput {
+  supportedStartupProject: String!
+  supportMonth: String
+  supportYear: String
+  isSupportingToPresent: Boolean
+  roleAndImpact: String
+}
+
+type Suggestion {
+  id: ID!
+  role: String
+  name: String
+  logoObjectKey: String
+  dateFounded: String
+  industries: [String]
+  description: String
+}
+
+type Enabler {
+  enablerId: String!
+  enablerName: String
+  email: String
+  logoObjectKey: String
+  dateFounded: String
+  organizationType: [String]
+  description: String
+  location: Location
+  contacts: [Contact!]
+  industryFocus: [String]
+  supportType: [String]
+  fundingStageFocus: [String]
+  investmentAmount: Float
+  startupStagePreference: [String]
+  preferredBusinessModels: [String]
+  investmentCriteria: [InvestmentCriteria]
+  portfolio: [PortfolioItem]
+  createdAt: String
+  suggestions: [Suggestion]
+}
+
+input CreateUpdateEnablerInput {
+  enablerId: String
+  enablerName: String!
+  email: String
+  logoObjectKey: String
+  dateFounded: String
+  organizationType: [String]
+  description: String
+  location: LocationInput
+  contacts: [ContactInput!]
+  industryFocus: [String]
+  supportType: [String]
+  fundingStageFocus: [String]
+  investmentAmount: Float
+  startupStagePreference: [String]
+  preferredBusinessModels: [String]
+  investmentCriteria: [InvestmentCriteriaInput]
+  portfolio: [PortfolioItemInput]
+}
+
 enum EntityType {
     STARTUP
     ENABLER
 }
 
 type MutationResponse {
-    startupId: String
+    id: String
 	message: String
 	success: Boolean
 }
+
+union Entity = Startup | Enabler
 
 # Root types
 type Query {
     getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
     getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
-	getStartup(startupId: String!): Startup! @aws_api_key
-    getStartupList(entityType: String): [Startup!] @aws_api_key
+	getStartupProfile(startupId: String!): Startup! @aws_api_key
+    getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
+    getMapList(entityType: EntityType): [Entity!] @aws_api_key
 }
 
 type Mutation {
     queryChat(input: ChatIn!): ChatOut @aws_api_key
     createUpdateStartup(input: CreateUpdateStartupInput!): MutationResponse! @aws_api_key
+    createUpdateEnabler(input: CreateUpdateEnablerInput!): MutationResponse! @aws_api_key
 }
 
 type Subscription {

@@ -1,14 +1,14 @@
 import { util } from '@aws-appsync/utils';
 
 export function request(ctx) {
-    const startupId = ctx.args.input.startupId || util.autoId();
+    const enablerId = ctx.args.input.enablerId || util.autoId();
     const tableName = 'elevate-dev-EntityTable';
     const transactItems = [];
     const createdAt = util.time.nowISO8601()
     const ksuid = util.autoKsuid()
 
-    // Metadata item - use UpdateItem if startupId exists, otherwise PutItem
-    if (ctx.args.input.startupId) {
+    // Metadata item - use UpdateItem if enablerId exists, otherwise PutItem
+    if (ctx.args.input.enablerId) {
         const updateExpression = [];
         const expressionValues = {};
         const expressionNames = {};
@@ -18,10 +18,15 @@ export function request(ctx) {
             email: '#email',
             logoObjectKey: '#logo',
             dateFounded: '#founded',
-            startupStage: '#stage',
+            organizationType: '#orgType',
             description: '#desc',
-            revenueModel: '#revenue',
-            location: '#loc'
+            location: '#loc',
+            industryFocus: '#industryFocus',
+            supportType: '#supportType',
+            fundingStageFocus: '#fundingStageFocus',
+            investmentAmount: '#invAmount',
+            startupStagePreference: '#stagePrefs',
+            preferredBusinessModels: '#bizModels',
         };
 
         for (const [field, placeholder] of Object.entries(fields)) {
@@ -36,8 +41,8 @@ export function request(ctx) {
             table: tableName,
             operation: 'UpdateItem',
             key: util.dynamodb.toMapValues({
-                hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'STARTUP#METADATA'
+                hashKey: `ENABLER#${enablerId}`,
+                rangeKey: 'ENABLER#METADATA'
             }),
             update: {
                 expression: `SET ${updateExpression.join(', ')}`,
@@ -45,98 +50,86 @@ export function request(ctx) {
                 expressionNames: expressionNames
             }
         });
-    } else {
-        // New startup - use PutItem
+    }
+
+    else {
+        // New enabler - use PutItem
         transactItems.push({
             table: tableName,
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
-                hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'STARTUP#METADATA'
+                hashKey: `ENABLER#${enablerId}`,
+                rangeKey: 'ENABLER#METADATA'
             }),
             attributeValues: util.dynamodb.toMapValues({
-                startupId,
-                startUpName: ctx.args.input.startUpName,
+                enablerId,
+                enablerName: ctx.args.input.enablerName,
                 email: ctx.args.input.email,
                 logoObjectKey: ctx.args.input.logoObjectKey,
                 dateFounded: ctx.args.input.dateFounded,
-                startupStage: ctx.args.input.startupStage,
+                organizationType: ctx.args.input.organizationType,
                 description: ctx.args.input.description,
-                revenueModel: ctx.args.input.revenueModel,
                 location: ctx.args.input.location,
+                industryFocus: ctx.args.input.industryFocus,
+                supportType: ctx.args.input.supportType,
+                fundingStageFocus: ctx.args.input.fundingStageFocus,
+                investmentAmount: ctx.args.input.investmentAmount,
+                startupStagePreference: ctx.args.input.startupStagePreference,
+                preferredBusinessModels: ctx.args.input.preferredBusinessModels,
                 GSI1PK: ksuid,
-                createdAt
+                createdAt,
             })
         });
     }
 
-    // Add new founders if provided
-    if (ctx.args.input.founders) {
-        const founders = Array.isArray(ctx.args.input.founders) ? ctx.args.input.founders : [ctx.args.input.founders];
-        transactItems.push({
-            table: tableName,
-            operation: 'PutItem',
-            key: util.dynamodb.toMapValues({
-                hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'STARTUP#FOUNDERS'
-            }),
-            attributeValues: util.dynamodb.toMapValues({
-                founders: founders,
-                GSI1PK: ksuid,
-                ...(ctx.args.input.startupId && { createdAt })
-            })
-        });
-    }
-
-    // Add similar blocks for contacts, milestones, and industries
+    // Add contacts if provided
     if (ctx.args.input.contacts) {
         const contacts = Array.isArray(ctx.args.input.contacts) ? ctx.args.input.contacts : [ctx.args.input.contacts];
         transactItems.push({
             table: tableName,
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
-                hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'STARTUP#CONTACTS'
+                hashKey: `ENABLER#${enablerId}`,
+                rangeKey: 'ENABLER#CONTACTS'
             }),
             attributeValues: util.dynamodb.toMapValues({
                 contacts: contacts,
                 GSI1PK: ksuid,
-                ...(ctx.args.input.startupId && { createdAt })
+                ...(ctx.args.input.enablerId && { createdAt })
             })
         });
     }
 
-    // Add similar blocks for milestones and industries
-    if (ctx.args.input.milestones) {
-        const milestones = Array.isArray(ctx.args.input.milestones) ? ctx.args.input.milestones : [ctx.args.input.milestones];
+    // Add investment criteria if provided
+    if (ctx.args.input.investmentCriteria) {
         transactItems.push({
             table: tableName,
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
-                hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'STARTUP#MILESTONES'
+                hashKey: `ENABLER#${enablerId}`,
+                rangeKey: 'ENABLER#INVESTMENT_CRITERIA'
             }),
             attributeValues: util.dynamodb.toMapValues({
-                milestones: milestones,
+                investmentCriteria: ctx.args.input.investmentCriteria,
                 GSI1PK: ksuid,
-                ...(ctx.args.input.startupId && { createdAt })
+                ...(ctx.args.input.enablerId && { createdAt })
             })
         });
     }
 
-    if (ctx.args.input.industry) {
-        const industries = Array.isArray(ctx.args.input.industry) ? ctx.args.input.industry : [ctx.args.input.industry];
+    // Add portfolio if provided
+    if (ctx.args.input.portfolio) {
         transactItems.push({
             table: tableName,
             operation: 'PutItem',
             key: util.dynamodb.toMapValues({
-                hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'STARTUP#INDUSTRIES'
+                hashKey: `ENABLER#${enablerId}`,
+                rangeKey: 'ENABLER#PORTFOLIO'
             }),
             attributeValues: util.dynamodb.toMapValues({
-                industries: industries,
+                portfolio: ctx.args.input.portfolio,
                 GSI1PK: ksuid,
-                ...(ctx.args.input.startupId && { createdAt })
+                ...(ctx.args.input.enablerId && { createdAt })
             })
         });
     }
@@ -162,15 +155,14 @@ export function response(ctx) {
         };
     }
 
-    // Extract startupId from the hashKey of the first item
-    // hashKey format is "STARTUP#<startupId>"
-    const startupId = ctx.result.keys[0].hashKey.split('#')[1];
+    // Extract enablerId from the hashKey of the first item
+    const enablerId = ctx.result.keys[0].hashKey.split('#')[1];
 
     return {
-        id: startupId,
-        message: ctx.args.input.startupId ?
-            "Startup successfully updated" :
-            "Startup successfully created",
+        id: enablerId,
+        message: ctx.args.input.enablerId ?
+            "Enabler successfully updated" :
+            "Enabler successfully created",
         success: true
     };
 }

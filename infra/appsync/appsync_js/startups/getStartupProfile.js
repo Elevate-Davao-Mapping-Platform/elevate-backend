@@ -29,6 +29,10 @@ export function response(ctx) {
     }
 
     const items = ctx.result.items;
+    if (items.length === 0) {
+        util.error("Startup not found", "NotFound");
+    }
+
     const startupId = ctx.arguments.startupId;
 
     // Initialize the startup object
