@@ -12,7 +12,7 @@ export function request(ctx) {
             expression:
                 "hashKey = :hashKey",
             expressionValues: util.dynamodb.toMapValues({
-                ":hashKey": `STARTUP#${ctx.args.startupId}`,
+                ":hashKey": `ENABLER#${ctx.args.enablerId}`,
             }),
         },
     };
@@ -30,46 +30,47 @@ export function response(ctx) {
 
     const items = ctx.result.items;
     if (items.length === 0) {
-        util.error("Startup not found", "NotFound");
+        util.error("Enabler not found", "NotFound");
     }
 
-    const startupId = ctx.arguments.startupId;
+    const enablerId = ctx.arguments.enablerId;
 
-    // Initialize the startup object
-    const startup = {
-        startupId: startupId,
+    // Initialize the enabler object
+    const enabler = {
+        enablerId: enablerId,
     };
 
     // Process each item based on its rangeKey
     items.forEach(item => {
         switch (item.rangeKey) {
-            case 'STARTUP#METADATA':
-                Object.assign(startup, {
-                    startUpName: item.startUpName,
+            case 'ENABLER#METADATA':
+                Object.assign(enabler, {
+                    enablerName: item.enablerName,
                     email: item.email,
                     logoObjectKey: item.logoObjectKey,
                     dateFounded: item.dateFounded,
-                    startupStage: item.startupStage,
+                    organizationType: item.organizationType,
                     description: item.description,
                     location: item.location,
-                    revenueModel: item.revenueModel,
-                    createdAt: item.createdAt
+                    industryFocus: item.industryFocus,
+                    supportType: item.supportType,
+                    fundingStageFocus: item.fundingStageFocus,
+                    investmentAmount: item.investmentAmount,
+                    startupStagePreference: item.startupStagePreference,
+                    preferredBusinessModels: item.preferredBusinessModels
                 });
                 break;
-            case 'STARTUP#CONTACTS':
-                startup.contacts = item.contacts;
+            case 'ENABLER#CONTACTS':
+                enabler.contacts = item.contacts;
                 break;
-            case 'STARTUP#INDUSTRIES':
-                startup.industry = item.industries;
+            case 'ENABLER#INVESTMENT_CRITERIA':
+                enabler.investmentCriteria = item.investmentCriteria;
                 break;
-            case 'STARTUP#MILESTONES':
-                startup.milestones = item.milestones;
-                break;
-            case 'STARTUP#FOUNDERS':
-                startup.founders = item.founders;
+            case 'ENABLER#PORTFOLIO':
+                enabler.portfolio = item.portfolio;
                 break;
         }
     });
 
-    return startup;
+    return enabler;
 }
