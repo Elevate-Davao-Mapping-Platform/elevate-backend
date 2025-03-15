@@ -134,11 +134,11 @@ class AppsyncAPI(Construct):
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
-        query_startup_js = f'{folder_root}/getStartup.js'
+        query_startup_js = f'{folder_root}/getStartupProfile.js'
         entity_table_data_source.create_resolver(
             f'{self.config.main_resources_name}-{self.config.stage}-QueryGetStartupResolver',
             type_name='Query',
-            field_name='getStartup',
+            field_name='getStartupProfile',
             code=appsync.Code.from_asset(query_startup_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
@@ -158,11 +158,11 @@ class AppsyncAPI(Construct):
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
-        query_enabler_js = f'{folder_root}/getEnabler.js'
+        query_enabler_js = f'{folder_root}/getEnablerProfile.js'
         entity_table_data_source.create_resolver(
             f'{self.config.main_resources_name}-{self.config.stage}-QueryGetEnablerResolver',
             type_name='Query',
-            field_name='getEnabler',
+            field_name='getEnablerProfile',
             code=appsync.Code.from_asset(query_enabler_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
@@ -173,11 +173,11 @@ class AppsyncAPI(Construct):
         """Sets up DynamoDB data source and resolvers for entity list functionality."""
         folder_root = './infra/appsync/appsync_js/entities'
 
-        query_entity_list_js = f'{folder_root}/getEntityList.js'
+        query_entity_list_js = f'{folder_root}/getMapList.js'
         entity_table_data_source.create_resolver(
             f'{self.config.main_resources_name}-{self.config.stage}-QueryGetEntityListResolver',
             type_name='Query',
-            field_name='getEntityList',
+            field_name='getMapList',
             code=appsync.Code.from_asset(query_entity_list_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )

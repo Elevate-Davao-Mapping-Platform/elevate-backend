@@ -223,9 +223,9 @@ union Entity = Startup | Enabler
 type Query {
     getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
     getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
-	getStartup(startupId: String!): Startup! @aws_api_key
-    getEnabler(enablerId: String!): Enabler! @aws_api_key
-    getEntityList(entityType: EntityType): [Entity!] @aws_api_key
+	getStartupProfile(startupId: String!): Startup! @aws_api_key
+    getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
+    getMapList(entityType: EntityType): [Entity!] @aws_api_key
 }
 
 type Mutation {
