@@ -100,7 +100,7 @@ type Startup {
     email: String
     logoObjectKey: String
     dateFounded: String
-    industry: [String!]
+    industries: [String!]
     startupStage: String
     description: String
     location: Location
@@ -122,7 +122,7 @@ input CreateUpdateStartupInput {
     description: String
     revenueModel: [String!]
     location: LocationInput
-    industry: [String!]
+    industries: [String!]
     contacts: [ContactInput!]
     milestones: [MilestoneInput!]
     founders: [FounderInput!]

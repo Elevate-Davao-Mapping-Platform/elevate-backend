@@ -21,7 +21,8 @@ export function request(ctx) {
             startupStage: '#stage',
             description: '#desc',
             revenueModel: '#revenue',
-            location: '#loc'
+            location: '#loc',
+            industries: '#industries'
         };
 
         for (const [field, placeholder] of Object.entries(fields)) {
@@ -64,6 +65,7 @@ export function request(ctx) {
                 description: ctx.args.input.description,
                 revenueModel: ctx.args.input.revenueModel,
                 location: ctx.args.input.location,
+                industries: ctx.args.input.industries,
                 GSI1PK: ksuid,
                 createdAt
             })
@@ -81,6 +83,7 @@ export function request(ctx) {
                 rangeKey: 'STARTUP#FOUNDERS'
             }),
             attributeValues: util.dynamodb.toMapValues({
+                startupId,
                 founders: founders,
                 GSI1PK: ksuid,
                 ...(ctx.args.input.startupId && { createdAt })
@@ -99,6 +102,7 @@ export function request(ctx) {
                 rangeKey: 'STARTUP#CONTACTS'
             }),
             attributeValues: util.dynamodb.toMapValues({
+                startupId,
                 contacts: contacts,
                 GSI1PK: ksuid,
                 ...(ctx.args.input.startupId && { createdAt })
@@ -117,24 +121,8 @@ export function request(ctx) {
                 rangeKey: 'STARTUP#MILESTONES'
             }),
             attributeValues: util.dynamodb.toMapValues({
+                startupId,
                 milestones: milestones,
-                GSI1PK: ksuid,
-                ...(ctx.args.input.startupId && { createdAt })
-            })
-        });
-    }
-
-    if (ctx.args.input.industry) {
-        const industries = Array.isArray(ctx.args.input.industry) ? ctx.args.input.industry : [ctx.args.input.industry];
-        transactItems.push({
-            table: tableName,
-            operation: 'PutItem',
-            key: util.dynamodb.toMapValues({
-                hashKey: `STARTUP#${startupId}`,
-                rangeKey: 'STARTUP#INDUSTRIES'
-            }),
-            attributeValues: util.dynamodb.toMapValues({
-                industries: industries,
                 GSI1PK: ksuid,
                 ...(ctx.args.input.startupId && { createdAt })
             })

@@ -93,6 +93,7 @@ export function request(ctx) {
                 rangeKey: 'ENABLER#CONTACTS'
             }),
             attributeValues: util.dynamodb.toMapValues({
+                enablerId,
                 contacts: contacts,
                 GSI1PK: ksuid,
                 ...(ctx.args.input.enablerId && { createdAt })
@@ -110,6 +111,7 @@ export function request(ctx) {
                 rangeKey: 'ENABLER#INVESTMENT_CRITERIA'
             }),
             attributeValues: util.dynamodb.toMapValues({
+                enablerId,
                 investmentCriteria: ctx.args.input.investmentCriteria,
                 GSI1PK: ksuid,
                 ...(ctx.args.input.enablerId && { createdAt })
@@ -127,6 +129,7 @@ export function request(ctx) {
                 rangeKey: 'ENABLER#PORTFOLIO'
             }),
             attributeValues: util.dynamodb.toMapValues({
+                enablerId,
                 portfolio: ctx.args.input.portfolio,
                 GSI1PK: ksuid,
                 ...(ctx.args.input.enablerId && { createdAt })

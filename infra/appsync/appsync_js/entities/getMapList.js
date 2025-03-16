@@ -66,14 +66,12 @@ export function response(ctx) {
                         description: item.description,
                         location: item.location,
                         revenueModel: item.revenueModel,
-                        createdAt: item.createdAt
+                        createdAt: item.createdAt,
+                        industries: item.industries
                     });
                     break;
                 case 'STARTUP#CONTACTS':
                     currentEntity.contacts = item.contacts;
-                    break;
-                case 'STARTUP#INDUSTRIES':
-                    currentEntity.industry = item.industries;
                     break;
                 case 'STARTUP#MILESTONES':
                     currentEntity.milestones = item.milestones;
