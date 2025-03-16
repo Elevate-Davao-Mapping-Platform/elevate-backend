@@ -25,7 +25,7 @@ class AppsyncAPI(Construct):
         self.api_id: str
 
         self.config = config
-        self.api = self._create_api(cognito_user_pool)
+        self.api = self._create_api(cognito_user_pool, entity_table)
 
         # Set up data sources and resolvers
         entity_table_data_source = self._setup_entity_table_data_source(entity_table)
@@ -40,7 +40,9 @@ class AppsyncAPI(Construct):
         self.api_key = self.api.api_key
         self.api_id = self.api.api_id
 
-    def _create_api(self, cognito_user_pool: cognito.UserPool) -> appsync.GraphqlApi:
+    def _create_api(
+        self, cognito_user_pool: cognito.UserPool, entity_table: dynamodb.Table
+    ) -> appsync.GraphqlApi:
         """Creates and configures the GraphQL API."""
         graphql_api_name = f'{self.config.main_resources_name}-{self.config.stage}-graphql-service'
         gql_schema = path.join(path.dirname(__file__), '..', '..', 'schema', 'schema.graphql')
@@ -69,6 +71,9 @@ class AppsyncAPI(Construct):
                 field_log_level=appsync.FieldLogLevel.ALL,
                 retention=logs.RetentionDays.ONE_WEEK,
             ),
+            environment_variables={
+                'TABLE_NAME': entity_table.table_name,
+            },
         )
 
     def _setup_entity_table_data_source(
@@ -125,12 +130,21 @@ class AppsyncAPI(Construct):
         """Sets up DynamoDB data source and resolvers for startup functionality."""
         folder_root = './infra/appsync/appsync_js/startups'
 
-        create_startup_js = f'{folder_root}/createUpdateStartup.js'
+        create_startup_js = f'{folder_root}/createStartup.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationCreateUpdateStartupResolver',
+            f'{self.config.main_resources_name}-{self.config.stage}-MutationCreateStartupResolver',
             type_name='Mutation',
-            field_name='createUpdateStartup',
+            field_name='createStartup',
             code=appsync.Code.from_asset(create_startup_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        update_startup_js = f'{folder_root}/updateStartup.js'
+        entity_table_data_source.create_resolver(
+            f'{self.config.main_resources_name}-{self.config.stage}-MutationUpdateStartupResolver',
+            type_name='Mutation',
+            field_name='updateStartup',
+            code=appsync.Code.from_asset(update_startup_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
@@ -149,12 +163,21 @@ class AppsyncAPI(Construct):
         """Sets up DynamoDB data source and resolvers for enabler functionality."""
         folder_root = './infra/appsync/appsync_js/enablers'
 
-        create_enabler_js = f'{folder_root}/createUpdateEnabler.js'
+        create_enabler_js = f'{folder_root}/createEnabler.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationCreateUpdateEnablerResolver',
+            f'{self.config.main_resources_name}-{self.config.stage}-MutationCreateEnablerResolver',
             type_name='Mutation',
-            field_name='createUpdateEnabler',
+            field_name='createEnabler',
             code=appsync.Code.from_asset(create_enabler_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        update_enabler_js = f'{folder_root}/updateEnabler.js'
+        entity_table_data_source.create_resolver(
+            f'{self.config.main_resources_name}-{self.config.stage}-MutationUpdateEnablerResolver',
+            type_name='Mutation',
+            field_name='updateEnabler',
+            code=appsync.Code.from_asset(update_enabler_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
