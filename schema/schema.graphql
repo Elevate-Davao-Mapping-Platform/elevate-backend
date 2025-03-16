@@ -100,7 +100,7 @@ type Startup {
     email: String
     logoObjectKey: String
     dateFounded: String
-    industry: [String!]
+    industries: [String!]
     startupStage: String
     description: String
     location: Location
@@ -112,8 +112,7 @@ type Startup {
     suggestions: [Suggestion]
 }
 
-input CreateUpdateStartupInput {
-    startupId: String
+input StartupInput {
     startUpName: String
     email: String
     logoObjectKey: String
@@ -122,7 +121,7 @@ input CreateUpdateStartupInput {
     description: String
     revenueModel: [String!]
     location: LocationInput
-    industry: [String!]
+    industries: [String!]
     contacts: [ContactInput!]
     milestones: [MilestoneInput!]
     founders: [FounderInput!]
@@ -186,8 +185,7 @@ type Enabler {
   suggestions: [Suggestion]
 }
 
-input CreateUpdateEnablerInput {
-  enablerId: String
+input EnablerInput {
   enablerName: String!
   email: String
   logoObjectKey: String
@@ -230,8 +228,10 @@ type Query {
 
 type Mutation {
     queryChat(input: ChatIn!): ChatOut @aws_api_key
-    createUpdateStartup(input: CreateUpdateStartupInput!): MutationResponse! @aws_api_key
-    createUpdateEnabler(input: CreateUpdateEnablerInput!): MutationResponse! @aws_api_key
+    createStartup(input: StartupInput!): MutationResponse! @aws_api_key
+    updateStartup(input: StartupInput!, startupId: String!): MutationResponse! @aws_api_key
+    createEnabler(input: EnablerInput!): MutationResponse! @aws_api_key
+    updateEnabler(input: EnablerInput!, enablerId: String!): MutationResponse! @aws_api_key
 }
 
 type Subscription {

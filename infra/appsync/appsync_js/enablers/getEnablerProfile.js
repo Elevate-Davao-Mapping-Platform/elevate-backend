@@ -57,7 +57,8 @@ export function response(ctx) {
                     fundingStageFocus: item.fundingStageFocus,
                     investmentAmount: item.investmentAmount,
                     startupStagePreference: item.startupStagePreference,
-                    preferredBusinessModels: item.preferredBusinessModels
+                    preferredBusinessModels: item.preferredBusinessModels,
+                    createdAt: item.createdAt
                 });
                 break;
             case 'ENABLER#CONTACTS':
