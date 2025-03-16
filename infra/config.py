@@ -52,6 +52,13 @@ class Config:
         self.lambda_config = LambdaConfig()
         self.bedrock_config = BedrockConfig()
 
+        self.verified_domain = 'elevate-davao.live'
+        self.app_email = 'no-reply@elevate-davao.live'
+        self.app_name = 'Elevate Davao'
+        self.domain_cert_arn = (
+            'arn:aws:acm:us-east-1:058264295349:certificate/e00d8129-7250-4226-82d9-e24249e515a1'
+        )
+
     @property
     def resource_name_prefix(self) -> str:
         return f'{self.main_resources_name}-{self.stage}'
