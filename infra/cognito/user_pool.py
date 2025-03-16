@@ -36,15 +36,18 @@ class UserPoolConstruct(Construct):
                 'phone_number': cognito.StringAttribute(mutable=True),
             },
             sign_in_case_sensitive=False,
-            # email=cognito.UserPoolEmail.with_ses(
-            #     from_email="noreply@elevate-davao.live",
-            #     from_name="Elevate Davao",
-            #     reply_to="support@elevate-davao.live"
-            # ),
-            # user_verification=cognito.UserVerificationConfig(
-            #     email_body="Welcome to Elevate Davao! Please verify your email by clicking the link below: {##Verify Email##}",
-            #     email_subject="Elevate Davao - Verify Your Email",
-            # )
+            email=cognito.UserPoolEmail.with_ses(
+                from_email=config.app_email,
+                from_name=config.app_name,
+                reply_to=config.app_email,
+                ses_region=config.region,
+                ses_verified_domain=config.verified_domain,
+            ),
+            user_verification=cognito.UserVerificationConfig(
+                email_subject='Elevate Davao - Verify Your Email',
+                email_body='Welcome to Elevate Davao! Please verify by using the OTP: {####}',
+                email_style=cognito.VerificationEmailStyle.CODE,
+            ),
         )
 
         # User Pool Client
