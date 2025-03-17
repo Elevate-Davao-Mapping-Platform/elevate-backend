@@ -45,7 +45,21 @@ class UserPoolConstruct(Construct):
             ),
             user_verification=cognito.UserVerificationConfig(
                 email_subject='Elevate Davao - Verify Your Email',
-                email_body='Welcome to Elevate Davao! Please verify by using the OTP: {####}',
+                email_body="""
+                    Welcome to Elevate Davao!
+
+                    We're excited to have you on board. To complete your registration, please verify your email by entering the following OTP:
+
+                    {####}
+
+                    This code is valid for a limited time, so be sure to enter it soon.
+
+                    If you didn't sign up for Elevate Davao, please ignore this email.
+
+                    Looking forward to seeing you in the community!
+
+                    — The Elevate Davao Team
+                """,
                 email_style=cognito.VerificationEmailStyle.CODE,
             ),
         )
