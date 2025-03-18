@@ -95,7 +95,7 @@ class AppsyncAPI(Construct):
         llm_service_ds.create_resolver(
             f'{self.config.main_resources_name}-{self.config.stage}-MutationQueryChat',
             type_name='Mutation',
-            field_name='queryChat',
+            field_name='sendChat',
             request_mapping_template=appsync.MappingTemplate.lambda_request(),
             response_mapping_template=appsync.MappingTemplate.lambda_result(),
         )

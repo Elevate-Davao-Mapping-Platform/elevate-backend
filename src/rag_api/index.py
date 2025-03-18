@@ -18,6 +18,13 @@ from utils.logger import logger
 
 
 def generate_response(chat_in: ChatPromptIn, chat_history_context: str):
+    """
+    Generate a response to a user prompt using a vector store index and a language model.
+
+    :param ChatPromptIn chat_in: The user prompt to generate a response for.
+    :param str chat_history_context: The chat history context to use for the response.
+    :return dict: A dictionary containing the response and the status code.
+    """
     # Configuration
     secret_name = 'elevate/pinecone-api-key'
     region_name = os.getenv('BEDROCK_AWS_REGION')
@@ -72,10 +79,15 @@ def generate_response(chat_in: ChatPromptIn, chat_history_context: str):
 
         # Perform the query
         query = (
-            f'You are an expert in Davao City Startups. '
-            f'You are given whatever context thrown at you and you will answer the user prompt without hallucinating '
-            'or mentioning youre not given enough context. '
-            f'Chat History: {chat_history_context}\n\nUser Prompt: {chat_in.query}\n\nResponse:'
+            "You are an AI assistant specializing in Davao City's startup ecosystem. "
+            "Using the provided context, please respond to the user's query with the following guidelines:\n\n"
+            '1. Provide accurate, context-based information about Davao City startups\n'
+            '2. Focus on specific, factual details from the given context\n'
+            '3. Be clear and concise in your responses\n'
+            '4. If multiple relevant points exist, organize them in a structured manner\n\n'
+            f'Previous Conversation:\n{chat_history_context}\n\n'
+            f'User Query: {chat_in.query}\n\n'
+            'Response:'
         )
         llm_result = query_engine.query(query)
 
