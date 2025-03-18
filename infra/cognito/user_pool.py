@@ -16,7 +16,7 @@ class UserPoolConstruct(Construct):
         self.user_pool = cognito.UserPool(
             self,
             'ElevateUserPool',
-            user_pool_name=f'{main_resources_name}-{stage}-UserPool',
+            user_pool_name=f'{main_resources_name}-{stage}-UserPool-2',
             account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
             auto_verify=cognito.AutoVerifiedAttrs(email=True),
             self_sign_up_enabled=True,
@@ -32,8 +32,10 @@ class UserPoolConstruct(Construct):
             ),
             standard_attributes={'email': cognito.StandardAttribute(mutable=True, required=True)},
             custom_attributes={
+                'entity_id': cognito.StringAttribute(mutable=True),
                 'user_name': cognito.StringAttribute(mutable=True),
-                'phone_number': cognito.StringAttribute(mutable=True),
+                'role': cognito.StringAttribute(mutable=False),
+                'is_first_sign_in': cognito.BooleanAttribute(mutable=True),
             },
             sign_in_case_sensitive=False,
             email=cognito.UserPoolEmail.with_ses(
