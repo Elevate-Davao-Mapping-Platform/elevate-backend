@@ -1,10 +1,6 @@
 import os
 
-from pynamodb.attributes import (
-    DiscriminatorAttribute,
-    NumberAttribute,
-    UnicodeAttribute,
-)
+from pynamodb.attributes import DiscriminatorAttribute, UnicodeAttribute
 from pynamodb.models import Model
 
 
@@ -19,7 +15,6 @@ class Entities(Model):
     hashKey = UnicodeAttribute(hash_key=True)
     rangeKey = UnicodeAttribute(range_key=True)
 
-    latestVersion = NumberAttribute(null=False)
     entryStatus = UnicodeAttribute(null=False)
     entryId = UnicodeAttribute(null=False)
 

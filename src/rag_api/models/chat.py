@@ -6,8 +6,8 @@ from pynamodb.attributes import UnicodeAttribute
 
 
 class Chat(Entities, discriminator='Chat'):
-    # hk: Chat#<userId>
-    # rk: v<version_number>#<chatTopicId>#<entryId>
+    # hk: CHAT#<userId>TOPIC#<chatTopicId>
+    # rk: MESSAGE#<entryId>
 
     message = UnicodeAttribute(null=False)
     type = UnicodeAttribute(null=False)

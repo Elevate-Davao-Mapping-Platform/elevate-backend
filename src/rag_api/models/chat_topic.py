@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from pynamodb.attributes import UnicodeAttribute
 
 
-class ChatTopic(Entities, discriminator='ChatTopic'):
-    # hk: ChatTopic#<userId>
-    # rk: v<version_number>#<entryId>
+class ChatTopic(Entities, discriminator='CHAT_TOPIC'):
+    # hk: CHAT_TOPIC#<userId>
+    # rk: TOPIC#<entryId>
 
     title = UnicodeAttribute(null=False)
 
