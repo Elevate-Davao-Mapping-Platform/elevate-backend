@@ -1,130 +1,128 @@
 # Common input types
 input LatLngInput {
-    lat: Float
-    lng: Float
+  lat: Float
+  lng: Float
 }
 
 input LocationInput {
-    address: String
-    latlng: LatLngInput
+  address: String
+  latlng: LatLngInput
 }
 
 input ContactInput {
-    platform: String!
-    value: String!
+  platform: String!
+  value: String!
 }
 
 # Common object types
 type LatLng {
-    lat: Float
-    lng: Float
+  lat: Float
+  lng: Float
 }
 
 type Location {
-    address: String
-    latlng: LatLng
+  address: String
+  latlng: LatLng
 }
 
 type Contact {
-    platform: String!
-    value: String!
+  platform: String!
+  value: String!
 }
 
 # Chat related types
 type Chat {
-    entryId: String!
-    message: String!
-    type: String!
-    userId: String!
-    chatTopicId: String!
-    updateDate: String!
+  entryId: String!
+  message: String!
+  type: String!
+  userId: String!
+  chatTopicId: String!
+  updateDate: String!
 }
 
 type ChatTopic {
-    entryId: String!
-    title: String!
-    updateDate: String!
+  entryId: String!
+  title: String!
+  updateDate: String!
 }
 
 type ChatOut {
-    response: String!
-    chatTopicId: String
-    userId: String
-    chatId: String
+  response: String!
+  chatTopicId: String
+  userId: String
+  chatId: String
 }
 
 input ChatIn {
-    query: String!
-    userId: String!
-    chatTopicId: String
+  query: String!
+  userId: String!
+  chatTopicId: String
 }
 
 # Startup related types
 type Milestone {
-    milestoneId: Int!
-    title: String!
-    dateAchieved: String!
-    description: String
+  title: String!
+  dateAchieved: String!
+  description: String
 }
 
 input MilestoneInput {
-    milestoneId: Int!
-    title: String!
-    dateAchieved: String!
-    description: String
+  title: String!
+  dateAchieved: String!
+  description: String
 }
 
 type Founder {
-    founderId: Int!
-    name: String!
-    role: String!
-    dateJoined: String!
-    overview: String!
-    photoObjectkey: String!
-    contacts: [Contact!]!
+  founderId: Int!
+  name: String!
+  role: String
+  dateJoined: String
+  overview: String
+  photoObjectkey: String
+  contacts: [Contact!]!
 }
 
 input FounderInput {
-    founderId: Int!
-    name: String!
-    role: String!
-    dateJoined: String!
-    overview: String!
-    photoObjectkey: String!
-    contacts: [ContactInput!]!
+  founderId: Int!
+  name: String!
+  role: String
+  dateJoined: String
+  overview: String
+  photoObjectkey: String
+  contacts: [ContactInput!]!
 }
 
 type Startup {
-    startupId: String!
-    startUpName: String
-    email: String
-    logoObjectKey: String
-    dateFounded: String
-    industries: [String!]
-    startupStage: String
-    description: String
-    location: Location
-    contacts: [Contact!]
-    revenueModel: [String!]
-    milestones: [Milestone!]
-    founders: [Founder!]
-    createdAt: String
-    suggestions: [Suggestion]
+  startupId: String!
+  startUpName: String
+  email: String
+  logoObjectKey: String
+  dateFounded: String
+  industries: [String!]!
+  startupStage: String
+  description: String
+  location: Location
+  contacts: [Contact!]!
+  revenueModel: [String!]!
+  milestones: [Milestone!]!
+  founders: [Founder!]!
+  createdAt: String
+  suggestions: [Suggestion!]!
 }
 
 input StartupInput {
-    startUpName: String
-    email: String
-    logoObjectKey: String
-    dateFounded: String
-    startupStage: String
-    description: String
-    revenueModel: [String!]
-    location: LocationInput
-    industries: [String!]
-    contacts: [ContactInput!]
-    milestones: [MilestoneInput!]
-    founders: [FounderInput!]
+  startUpName: String
+  email: String
+  logoObjectKey: String
+  dateFounded: String
+  startupStage: String
+  description: String
+  revenueModel: [String!]!
+  location: LocationInput
+  industries: [String!]!
+  contacts: [ContactInput!]!
+  milestones: [MilestoneInput!]!
+  founders: [FounderInput!]!
 }
 
 type InvestmentCriteria {
@@ -139,16 +137,14 @@ input InvestmentCriteriaInput {
 
 type PortfolioItem {
   supportedStartupProject: String!
-  supportMonth: String
-  supportYear: String
+  dateSupported: String
   isSupportingToPresent: Boolean
   roleAndImpact: String
 }
 
 input PortfolioItemInput {
   supportedStartupProject: String!
-  supportMonth: String
-  supportYear: String
+  dateSupported: String
   isSupportingToPresent: Boolean
   roleAndImpact: String
 }
@@ -159,7 +155,7 @@ type Suggestion {
   name: String
   logoObjectKey: String
   dateFounded: String
-  industries: [String]
+  industries: [String!]!
   description: String
 }
 
@@ -169,20 +165,20 @@ type Enabler {
   email: String
   logoObjectKey: String
   dateFounded: String
-  organizationType: [String]
+  organizationType: [String!]!
   description: String
   location: Location
-  contacts: [Contact!]
-  industryFocus: [String]
-  supportType: [String]
-  fundingStageFocus: [String]
+  contacts: [Contact!]!
+  industryFocus: [String!]!
+  supportType: [String!]!
+  fundingStageFocus: [String!]!
   investmentAmount: Float
-  startupStagePreference: [String]
-  preferredBusinessModels: [String]
-  investmentCriteria: [InvestmentCriteria]
-  portfolio: [PortfolioItem]
+  startupStagePreference: [String!]!
+  preferredBusinessModels: [String!]!
+  investmentCriteria: [InvestmentCriteria!]!
+  portfolio: [PortfolioItem!]!
   createdAt: String
-  suggestions: [Suggestion]
+  suggestions: [Suggestion!]!
 }
 
 input EnablerInput {
@@ -190,51 +186,53 @@ input EnablerInput {
   email: String
   logoObjectKey: String
   dateFounded: String
-  organizationType: [String]
+  organizationType: [String!]!
   description: String
   location: LocationInput
-  contacts: [ContactInput!]
-  industryFocus: [String]
-  supportType: [String]
-  fundingStageFocus: [String]
+  contacts: [ContactInput!]!
+  industryFocus: [String!]!
+  supportType: [String!]!
+  fundingStageFocus: [String!]!
   investmentAmount: Float
-  startupStagePreference: [String]
-  preferredBusinessModels: [String]
-  investmentCriteria: [InvestmentCriteriaInput]
-  portfolio: [PortfolioItemInput]
+  startupStagePreference: [String!]!
+  preferredBusinessModels: [String!]!
+  investmentCriteria: [InvestmentCriteriaInput!]!
+  portfolio: [PortfolioItemInput!]!
 }
 
 enum EntityType {
-    STARTUP
-    ENABLER
+  STARTUP
+  ENABLER
 }
 
 type MutationResponse {
-    id: String
-	message: String
-	success: Boolean
+  id: String
+  message: String
+  success: Boolean
 }
 
 union Entity = Startup | Enabler
 
 # Root types
 type Query {
-    getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
-    getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
-	getStartupProfile(startupId: String!): Startup! @aws_api_key
-    getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
-    getMapList(entityType: EntityType): [Entity!] @aws_api_key
+  getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
+  getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
+  getStartupProfile(startupId: String!): Startup! @aws_api_key
+  getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
+  getMapList(entityType: EntityType): [Entity!] @aws_api_key
 }
 
 type Mutation {
-    queryChat(input: ChatIn!): ChatOut @aws_api_key
-    createStartup(input: StartupInput!): MutationResponse! @aws_api_key
-    updateStartup(input: StartupInput!, startupId: String!): MutationResponse! @aws_api_key
-    createEnabler(input: EnablerInput!): MutationResponse! @aws_api_key
-    updateEnabler(input: EnablerInput!, enablerId: String!): MutationResponse! @aws_api_key
+  queryChat(input: ChatIn!): ChatOut @aws_api_key
+  createStartup(input: StartupInput!): MutationResponse! @aws_api_key
+  updateStartup(input: StartupInput!, startupId: String!): MutationResponse!
+    @aws_api_key
+  createEnabler(input: EnablerInput!): MutationResponse! @aws_api_key
+  updateEnabler(input: EnablerInput!, enablerId: String!): MutationResponse!
+    @aws_api_key
 }
 
 type Subscription {
-    onChatResponse(id: EntityType!): ChatOut
-        @aws_subscribe(mutations: ["queryChat"])
+  onChatResponse(id: EntityType!): ChatOut
+    @aws_subscribe(mutations: ["queryChat"])
 }
