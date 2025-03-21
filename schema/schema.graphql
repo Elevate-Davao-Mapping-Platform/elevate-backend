@@ -1,12 +1,12 @@
 # Common input types
 input LatLngInput {
-  lat: Float
-  lng: Float
+  lat: Float!
+  lng: Float!
 }
 
 input LocationInput {
-  address: String
-  latlng: LatLngInput
+  address: String!
+  latlng: LatLngInput!
 }
 
 input ContactInput {
@@ -16,13 +16,13 @@ input ContactInput {
 
 # Common object types
 type LatLng {
-  lat: Float
-  lng: Float
+  lat: Float!
+  lng: Float!
 }
 
 type Location {
-  address: String
-  latlng: LatLng
+  address: String!
+  latlng: LatLng!
 }
 
 type Contact {
@@ -73,7 +73,7 @@ input MilestoneInput {
 }
 
 type Founder {
-  founderId: Int!
+  founderId: String!
   name: String!
   role: String
   dateJoined: String
@@ -83,7 +83,7 @@ type Founder {
 }
 
 input FounderInput {
-  founderId: Int!
+  founderId: String!
   name: String!
   role: String
   dateJoined: String
@@ -94,8 +94,8 @@ input FounderInput {
 
 type Startup {
   startupId: String!
-  startUpName: String
-  email: String
+  startUpName: String!
+  email: String!
   logoObjectKey: String
   dateFounded: String
   industries: [String!]!
@@ -107,11 +107,11 @@ type Startup {
   milestones: [Milestone!]!
   founders: [Founder!]!
   createdAt: String
-  suggestions: [Suggestion!]!
+  suggestions: [Suggestion!]
 }
 
 input StartupInput {
-  startUpName: String
+  startUpName: String!
   email: String
   logoObjectKey: String
   dateFounded: String
@@ -138,21 +138,21 @@ input InvestmentCriteriaInput {
 type PortfolioItem {
   supportedStartupProject: String!
   dateSupported: String
-  isSupportingToPresent: Boolean
+  isSupportingToPresent: Boolean!
   roleAndImpact: String
 }
 
 input PortfolioItemInput {
   supportedStartupProject: String!
   dateSupported: String
-  isSupportingToPresent: Boolean
+  isSupportingToPresent: Boolean!
   roleAndImpact: String
 }
 
 type Suggestion {
   id: ID!
-  role: String
-  name: String
+  role: String!
+  name: String!
   logoObjectKey: String
   dateFounded: String
   industries: [String!]!
@@ -161,8 +161,8 @@ type Suggestion {
 
 type Enabler {
   enablerId: String!
-  enablerName: String
-  email: String
+  enablerName: String!
+  email: String!
   logoObjectKey: String
   dateFounded: String
   organizationType: [String!]!
@@ -178,7 +178,7 @@ type Enabler {
   investmentCriteria: [InvestmentCriteria!]!
   portfolio: [PortfolioItem!]!
   createdAt: String
-  suggestions: [Suggestion!]!
+  suggestions: [Suggestion!]
 }
 
 input EnablerInput {
