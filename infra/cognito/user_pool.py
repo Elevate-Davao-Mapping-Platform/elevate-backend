@@ -16,7 +16,7 @@ class UserPoolConstruct(Construct):
         self.user_pool = cognito.UserPool(
             self,
             'ElevateUserPool',
-            user_pool_name=f'{main_resources_name}-{stage}-UserPool-2',
+            user_pool_name=f'{main_resources_name}-UserPool-{stage}',
             account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
             auto_verify=cognito.AutoVerifiedAttrs(email=True),
             self_sign_up_enabled=True,
