@@ -46,11 +46,18 @@ type ChatTopic {
   updateDate: String!
 }
 
+input ChatChunkInput {
+  response: String!
+  chatTopicId: String
+  userId: String
+  entryId: String
+}
+
 type ChatOut {
   response: String!
   chatTopicId: String
   userId: String
-  chatId: String
+  entryId: String
 }
 
 input ChatIn {
@@ -223,7 +230,8 @@ type Query {
 }
 
 type Mutation {
-  queryChat(input: ChatIn!): ChatOut @aws_api_key
+  sendChat(input: ChatIn!): MutationResponse! @aws_api_key
+  sendChatChunk(input: ChatChunkInput!): ChatOut! @aws_api_key
   createStartup(input: StartupInput!): MutationResponse! @aws_api_key
   updateStartup(input: StartupInput!, startupId: String!): MutationResponse!
     @aws_api_key
@@ -233,6 +241,6 @@ type Mutation {
 }
 
 type Subscription {
-  onChatResponse(id: EntityType!): ChatOut
-    @aws_subscribe(mutations: ["queryChat"])
+  onChatResponse(id: String!): ChatOut
+    @aws_subscribe(mutations: ["sendChatChunk"])
 }

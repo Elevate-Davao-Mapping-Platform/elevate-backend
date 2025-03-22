@@ -19,6 +19,15 @@ app = cdk.App()
 MAIN_RESOURCES_NAME = app.node.try_get_context('main_resources_name')
 STAGE = app.node.try_get_context('stage') or 'dev'
 
+stage = 'dev2'
+construct_id = f'{main_resources_name}-backend-stack-{stage}'
+ElevateBeStack(
+    app,
+    construct_id=construct_id,
+    main_resources_name=main_resources_name,
+    stage=stage,
+)
+
 stage = 'dev'
 construct_id = f'{main_resources_name}-backend-stack-{stage}'
 ElevateBeStack(

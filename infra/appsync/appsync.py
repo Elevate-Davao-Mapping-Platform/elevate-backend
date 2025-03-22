@@ -92,12 +92,23 @@ class AppsyncAPI(Construct):
             llm_rag_api.lambda_rag_api,
         )
 
+        folder_root = './infra/appsync/appsync_js/llm'
+        send_chat_js = f'{folder_root}/sendChat.js'
         llm_service_ds.create_resolver(
             f'{self.config.main_resources_name}-{self.config.stage}-MutationQueryChat',
             type_name='Mutation',
             field_name='sendChat',
-            request_mapping_template=appsync.MappingTemplate.lambda_request(),
-            response_mapping_template=appsync.MappingTemplate.lambda_result(),
+            code=appsync.Code.from_asset(send_chat_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        send_chat_chunk_js = f'{folder_root}/sendChatChunk.js'
+        llm_service_ds.create_resolver(
+            f'{self.config.main_resources_name}-{self.config.stage}-MutationQueryChatChunk',
+            type_name='Mutation',
+            field_name='sendChatChunk',
+            code=appsync.Code.from_asset(send_chat_chunk_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
     def _setup_chat_resolvers(self, entity_table_data_source: appsync.DynamoDbDataSource) -> None:

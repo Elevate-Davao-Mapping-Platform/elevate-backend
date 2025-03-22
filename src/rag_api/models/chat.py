@@ -1,8 +1,8 @@
 from typing import Optional
 
-from models.entity import Entities
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pynamodb.attributes import UnicodeAttribute
+from rag_api.models.entity import Entities
 
 
 class Chat(Entities, discriminator='Chat'):
@@ -16,20 +16,22 @@ class Chat(Entities, discriminator='Chat'):
 
 
 class ChatIn(BaseModel):
-    message: str
-    type: str
-    userId: str
-    chatTopicId: str
+    message: str = Field(..., description='The message to send')
+    type: str = Field(..., description='The type of message')
+    userId: str = Field(..., description='The user ID')
+    chatTopicId: str = Field(..., description='The chat topic ID')
+    entryId: Optional[str] = Field(None, description='The chat ID')
 
 
 class ChatPromptIn(BaseModel):
-    query: str
-    userId: str
-    chatTopicId: Optional[str] = None
+    query: str = Field(..., description='The query to send')
+    userId: str = Field(..., description='The user ID')
+    chatTopicId: Optional[str] = Field(None, description='The chat topic ID')
+    entryId: Optional[str] = Field(None, description='The chat ID')
 
 
 class ChatOut(BaseModel):
-    response: str
-    chatTopicId: str
-    userId: str
-    chatId: str
+    response: str = Field(..., description='The response to send')
+    chatTopicId: str = Field(..., description='The chat topic ID')
+    userId: str = Field(..., description='The user ID')
+    entryId: str = Field(..., description='The chat ID')

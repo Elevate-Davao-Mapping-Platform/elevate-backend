@@ -1,5 +1,9 @@
-from aws_cdk import CfnOutput, Duration, aws_iam
-from aws_cdk import aws_lambda as lambda_
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, aws_iam, aws_lambda, aws_logs
+from aws_cdk.aws_lambda_python_alpha import (
+    BundlingOptions,
+    PythonFunction,
+    PythonLayerVersion,
+)
 from constructs import Construct
 
 from infra.config import Config
@@ -22,11 +26,7 @@ class LLMRAGAPI(Construct):
         super().__init__(scope, construct_id)
 
         # Store the inputs
-        self.construct_id = construct_id
-        self.main_resources_name = config.main_resources_name
-        self.stage = config.stage
-        self.region = config.region
-        self.bedrock_region = config.bedrock_region
+        self.config = config
 
         # Create resources
         self.create_lambda_function()
@@ -55,12 +55,18 @@ class LLMRAGAPI(Construct):
         # Grant permission to invoke Bedrock
         lambda_role.add_to_policy(
             aws_iam.PolicyStatement(
-                actions=['bedrock:InvokeModel', 'secretsmanager:GetSecretValue'],
+                actions=['bedrock:InvokeModel'],
                 resources=[
-                    'arn:aws:bedrock:*:*:foundation-model/anthropic.claude-v2:1',
-                    'arn:aws:bedrock:*:*:foundation-model/amazon.titan-embed-text-v2:0',
-                    'arn:aws:secretsmanager:*:*:secret:elevate/*',
+                    'arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
+                    'arn:aws:bedrock:*:*:foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0',
                 ],
+            )
+        )
+
+        lambda_role.add_to_policy(
+            aws_iam.PolicyStatement(
+                actions=['bedrock:Retrieve'],
+                resources=['arn:aws:bedrock:us-east-1:058264295349:knowledge-base/ORGCXIYNDH'],
             )
         )
 
@@ -78,29 +84,52 @@ class LLMRAGAPI(Construct):
         )
 
         # Create the Lambda function using Docker
-        north_virginia_region = self.bedrock_region
-        current_region = self.region
-        self.lambda_rag_api = lambda_.DockerImageFunction(
+        self.rag_api_layer = PythonLayerVersion(
             self,
-            f'{self.main_resources_name}-llm-service-{self.stage}',
-            function_name=f'{self.main_resources_name}-llm-service-{self.stage}',
-            code=lambda_.DockerImageCode.from_image_asset(
-                'src/rag_api',
-                exclude=['*.pyc', '.pytest_cache', '__pycache__'],
+            f'{self.config.prefix}-rag-api-layer',
+            layer_version_name=f'{self.config.prefix}-rag-api-layer',
+            entry='src/rag_api/layer',
+            compatible_runtimes=[aws_lambda.Runtime.PYTHON_3_12],
+            compatible_architectures=[aws_lambda.Architecture.X86_64],
+            description='Dependencies for RAG API Lambda',
+            removal_policy=RemovalPolicy.DESTROY,
+            bundling=BundlingOptions(
+                asset_excludes=[
+                    '**/__pycache__',
+                ],
             ),
-            timeout=Duration.seconds(60 * 5),  # 5 minutes
-            memory_size=1024,
+        )
+
+        self.lambda_rag_api = PythonFunction(
+            self,
+            f'{self.config.prefix}-rag-api',
+            function_name=f'{self.config.prefix}-rag-api',
+            runtime=aws_lambda.Runtime.PYTHON_3_12,
+            handler='handler',
+            entry='src',
+            index='rag_api/handler.py',
+            timeout=Duration.seconds(120),
+            log_retention=aws_logs.RetentionDays.ONE_MONTH,
+            memory_size=512,
             environment={
-                'STAGE': self.stage,
-                'LOG_LEVEL': 'DEBUG' if self.stage == 'dev' else 'INFO',
-                'POWERTOOLS_SERVICE_NAME': 'llm-service',
-                'POWERTOOLS_LOGGER_LOG_EVENT': 'true',
-                'BEDROCK_AWS_REGION': north_virginia_region,
+                'STAGE': self.config.stage,
+                'LOG_LEVEL': self.config.log_level,
+                'REGION': self.config.region,
+                'BEDROCK_AWS_REGION': self.config.bedrock_region,
                 'ENTITIES_TABLE': self.entity_table.table_name,
-                'REGION': current_region,
+                'KNOWLEDGE_BASE_ID': 'ORGCXIYNDH',
+                'POWERTOOLS_LOG_LEVEL': 'DEBUG',
+                'POWERTOOLS_SERVICE_NAME': 'elevate-dev-llm-service',
+                'POWERTOOLS_LOGGER_LOG_EVENT': 'true',
             },
-            architecture=lambda_.Architecture.X86_64,
             role=lambda_role,
+            layers=[self.rag_api_layer],
+            bundling=BundlingOptions(
+                asset_excludes=[
+                    '**/__pycache__',
+                    'local_tests',
+                ],
+            ),
         )
 
     def generate_cloudformation_outputs(self):
@@ -110,7 +139,7 @@ class LLMRAGAPI(Construct):
         CfnOutput(
             self,
             'DeploymentEnvironment',
-            value=self.stage,
+            value=self.config.stage,
             description='Deployment environment',
         )
 

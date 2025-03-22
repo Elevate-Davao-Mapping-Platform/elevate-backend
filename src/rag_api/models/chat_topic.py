@@ -1,6 +1,6 @@
-from models.entity import Entities
 from pydantic import BaseModel
 from pynamodb.attributes import UnicodeAttribute
+from rag_api.models.entity import Entities
 
 
 class ChatTopic(Entities, discriminator='CHAT_TOPIC'):

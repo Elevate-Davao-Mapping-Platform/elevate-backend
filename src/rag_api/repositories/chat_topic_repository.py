@@ -5,8 +5,7 @@ from http import HTTPStatus
 from typing import Tuple
 
 import pytz
-from constants.common_constants import EntryStatus
-from models.chat_topic import ChatTopic, ChatTopicIn
+from aws_lambda_powertools import Logger
 from pynamodb.connection import Connection
 from pynamodb.exceptions import (
     PutError,
@@ -14,7 +13,8 @@ from pynamodb.exceptions import (
     QueryError,
     TableDoesNotExist,
 )
-from utils.logger import logger
+from rag_api.constants.common_constants import EntryStatus
+from rag_api.models.chat_topic import ChatTopic, ChatTopicIn
 
 
 class ChatTopicRepository:
@@ -22,6 +22,7 @@ class ChatTopicRepository:
         self.core_obj_key = 'CHAT_TOPIC'
         self.topic_key = 'TOPIC'
         self.conn = Connection(region=os.getenv('REGION'))
+        self.logger = Logger()
 
     def store_chat_topic(self, chat_topic_in: ChatTopicIn) -> Tuple[HTTPStatus, ChatTopic, str]:
         """Store a new ChatTopic entry."""
@@ -44,21 +45,21 @@ class ChatTopicRepository:
 
         except PutError as e:
             message = f'Failed to save chat topic: {str(e)}'
-            logger.error(f'[{self.core_obj_key} = {entry_id}]: {message}')
+            self.logger.exception(f'[{self.core_obj_key} = {entry_id}]: {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except TableDoesNotExist as db_error:
             message = f'Error on Table, Please check config to make sure table is created: {str(db_error)}'
-            logger.error(f'[{self.core_obj_key} = {entry_id}]: {message}')
+            self.logger.exception(f'[{self.core_obj_key} = {entry_id}]: {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except PynamoDBConnectionError as db_error:
             message = f'Connection error occurred, Please check config(region, table name, etc): {str(db_error)}'
-            logger.error(f'[{self.core_obj_key} = {entry_id}]: {message}')
+            self.logger.exception(f'[{self.core_obj_key} = {entry_id}]: {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         else:
-            logger.info(f'[{self.core_obj_key} = {entry_id}]: Save ChatTopic Entry Successful')
+            self.logger.info(f'[{self.core_obj_key} = {entry_id}]: Save ChatTopic Entry Successful')
             return HTTPStatus.OK, chat_topic_entry, None
 
     def query_chat_topic(
@@ -81,15 +82,15 @@ class ChatTopicRepository:
 
         except QueryError as e:
             message = f'Failed to query chat topic: {str(e)}'
-            logger.error(f'[{self.core_obj_key}={chat_topic_id}] {message}')
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic_id}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except TableDoesNotExist as db_error:
             message = f'Error on Table, Please check config to make sure table is created: {str(db_error)}'
-            logger.error(f'[{self.core_obj_key}={chat_topic_id}] {message}')
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic_id}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except PynamoDBConnectionError as db_error:
             message = f'Connection error occurred, Please check config(region, table name, etc): {str(db_error)}'
-            logger.error(f'[{self.core_obj_key}={chat_topic_id}] {message}')
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic_id}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message

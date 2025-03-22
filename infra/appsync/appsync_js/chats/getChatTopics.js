@@ -11,7 +11,7 @@ export function request(ctx) {
         query: {
             expression: "hashKey = :hashKey",
             expressionValues: util.dynamodb.toMapValues({
-                ":hashKey": `ChatTopic#${ctx.args.userId}`,
+                ":hashKey": `CHAT_TOPIC#${ctx.args.userId}`,
             }),
         },
     };
