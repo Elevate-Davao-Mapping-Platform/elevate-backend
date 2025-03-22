@@ -10,10 +10,9 @@ export function request(ctx) {
         operation: "Query",
         query: {
             expression:
-                "hashKey = :hashKey and begins_with(rangeKey, :rangeKeyPrefix)",
+                "hashKey = :hashKey",
             expressionValues: util.dynamodb.toMapValues({
-                ":hashKey": `Chat#${ctx.args.userId}`,
-                ":rangeKeyPrefix": `v0#${ctx.args.chatTopicId}#`,
+                ":hashKey": `CHAT#${ctx.args.userId}#TOPIC#${ctx.args.chatTopicId}`
             }),
         },
     };

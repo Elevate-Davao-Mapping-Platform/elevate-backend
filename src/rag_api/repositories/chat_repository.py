@@ -5,8 +5,7 @@ from http import HTTPStatus
 from typing import List, Tuple
 
 import pytz
-from constants.common_constants import EntryStatus
-from models.chat import Chat, ChatIn
+from aws_lambda_powertools import Logger
 from pynamodb.connection import Connection
 from pynamodb.exceptions import (
     PutError,
@@ -14,8 +13,8 @@ from pynamodb.exceptions import (
     QueryError,
     TableDoesNotExist,
 )
-from repositories.repository_utils import RepositoryUtils
-from utils.logger import logger
+from rag_api.constants.common_constants import EntryStatus
+from rag_api.models.chat import Chat, ChatIn
 
 
 class ChatRepository:
@@ -24,6 +23,7 @@ class ChatRepository:
         self.topic_key = 'TOPIC'
         self.message_key = 'MESSAGE'
         self.conn = Connection(region=os.getenv('REGION'))
+        self.logger = Logger()
 
     def store_chat(self, chat_in: ChatIn) -> Tuple[HTTPStatus, Chat, str]:
         """Store a new Chat entry.
@@ -35,12 +35,16 @@ class ChatRepository:
         :rtype: Tuple[HTTPStatus, Chat, str]
 
         """
-        data = RepositoryUtils.load_data(pydantic_schema_in=chat_in)
+        if not chat_in.entryId:
+            chat_in.entryId = str(uuid.uuid4())
 
-        entry_id = str(uuid.uuid4())
+        entry_id = chat_in.entryId
+
         hash_key = f'{self.core_obj_key}#{chat_in.userId}#{self.topic_key}#{chat_in.chatTopicId}'
         range_key = f'{self.message_key}#{entry_id}'
         current_date = datetime.now(tz=pytz.timezone('Asia/Manila')).isoformat()
+
+        data = chat_in.model_dump()
 
         try:
             chat_entry = Chat(
@@ -49,28 +53,27 @@ class ChatRepository:
                 createDate=current_date,
                 updateDate=current_date,
                 entryStatus=EntryStatus.ACTIVE.value,
-                entryId=entry_id,
                 **data,
             )
             chat_entry.save()
 
         except PutError as e:
             message = f'Failed to save chat entry: {str(e)}'
-            logger.error(f'[{self.core_obj_key} = {entry_id}]: {message}')
+            self.logger.exception(f'[{self.core_obj_key} = {entry_id}]: {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except TableDoesNotExist as db_error:
             message = f'Error on Table, Please check config to make sure table is created: {str(db_error)}'
-            logger.error(f'[{self.core_obj_key} = {entry_id}]: {message}')
+            self.logger.exception(f'[{self.core_obj_key} = {entry_id}]: {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except PynamoDBConnectionError as db_error:
             message = f'Connection error occurred, Please check config(region, table name, etc): {str(db_error)}'
-            logger.error(f'[{self.core_obj_key} = {entry_id}]: {message}')
+            self.logger.exception(f'[{self.core_obj_key} = {entry_id}]: {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         else:
-            logger.info(f'[{self.core_obj_key} = {entry_id}]: Save Chat Entry Successful')
+            self.logger.info(f'[{self.core_obj_key} = {entry_id}]: Save Chat Entry Successful')
             return HTTPStatus.OK, chat_entry, None
 
     def get_chats_in_topic(
@@ -87,15 +90,15 @@ class ChatRepository:
 
         except QueryError as e:
             message = f'Failed to query chat: {str(e)}'
-            logger.error(f'[{self.core_obj_key}={chat_topic_id}] {message}')
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic_id}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except TableDoesNotExist as db_error:
             message = f'Error on Table, Please check config to make sure table is created: {str(db_error)}'
-            logger.error(f'[{self.core_obj_key}={chat_topic_id}] {message}')
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic_id}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
 
         except PynamoDBConnectionError as db_error:
             message = f'Connection error occurred, Please check config(region, table name, etc): {str(db_error)}'
-            logger.error(f'[{self.core_obj_key}={chat_topic_id}] {message}')
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic_id}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
