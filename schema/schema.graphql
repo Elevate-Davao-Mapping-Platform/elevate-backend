@@ -241,6 +241,6 @@ type Mutation {
 }
 
 type Subscription {
-  onChatResponse(id: String!): ChatOut
+  onChatResponse(chatTopicId: String, userId: String): ChatOut
     @aws_subscribe(mutations: ["sendChatChunk"])
 }

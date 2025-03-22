@@ -29,7 +29,7 @@ class AppsyncAPI(Construct):
 
         # Set up data sources and resolvers
         entity_table_data_source = self._setup_entity_table_data_source(entity_table)
-        self._setup_llm_resolvers(llm_rag_api)
+        self._setup_llm_resolvers(llm_rag_api, entity_table_data_source)
         self._setup_chat_resolvers(entity_table_data_source)
         self._setup_startup_resolvers(entity_table_data_source)
         self._setup_enabler_resolvers(entity_table_data_source)
@@ -44,7 +44,7 @@ class AppsyncAPI(Construct):
         self, cognito_user_pool: cognito.UserPool, entity_table: dynamodb.Table
     ) -> appsync.GraphqlApi:
         """Creates and configures the GraphQL API."""
-        graphql_api_name = f'{self.config.main_resources_name}-{self.config.stage}-graphql-service'
+        graphql_api_name = f'{self.config.prefix}-graphql-service'
         gql_schema = path.join(path.dirname(__file__), '..', '..', 'schema', 'schema.graphql')
 
         return appsync.GraphqlApi(
@@ -81,21 +81,24 @@ class AppsyncAPI(Construct):
     ) -> appsync.DynamoDbDataSource:
         """Sets up DynamoDB data source for entity table."""
         return self.api.add_dynamo_db_data_source(
-            f'{self.config.main_resources_name}-{self.config.stage}-EntityDDBsource',
+            f'{self.config.prefix}-EntityDDBsource',
             entity_table,
         )
 
-    def _setup_llm_resolvers(self, llm_rag_api) -> None:
+    def _setup_llm_resolvers(
+        self, llm_rag_api, entity_table_data_source: appsync.DynamoDbDataSource
+    ) -> None:
         """Sets up Lambda data source and resolvers for LLM functionality."""
         llm_service_ds = self.api.add_lambda_data_source(
-            f'{self.config.main_resources_name}-{self.config.stage}-llm-service-data-source',
+            f'{self.config.prefix}-llm-service-data-source',
             llm_rag_api.lambda_rag_api,
         )
 
         folder_root = './infra/appsync/appsync_js/llm'
+
         send_chat_js = f'{folder_root}/sendChat.js'
         llm_service_ds.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationQueryChat',
+            f'{self.config.prefix}-MutationQueryChat',
             type_name='Mutation',
             field_name='sendChat',
             code=appsync.Code.from_asset(send_chat_js),
@@ -103,8 +106,11 @@ class AppsyncAPI(Construct):
         )
 
         send_chat_chunk_js = f'{folder_root}/sendChatChunk.js'
-        llm_service_ds.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationQueryChatChunk',
+        non_entity_table_data_source = self.api.add_none_data_source(
+            f'{self.config.prefix}-non-entity-table-data-source',
+        )
+        non_entity_table_data_source.create_resolver(
+            f'{self.config.prefix}-MutationQueryChatChunk',
             type_name='Mutation',
             field_name='sendChatChunk',
             code=appsync.Code.from_asset(send_chat_chunk_js),
@@ -118,7 +124,7 @@ class AppsyncAPI(Construct):
         # Resolver for getChatTopics
         get_chat_topics_js = f'{folder_root}/getChatTopics.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-QueryGetChatTopicsResolver',
+            f'{self.config.prefix}-QueryGetChatTopicsResolver',
             type_name='Query',
             field_name='getChatTopics',
             code=appsync.Code.from_asset(get_chat_topics_js),
@@ -128,7 +134,7 @@ class AppsyncAPI(Construct):
         # Resolver for getChats
         get_chats_js = f'{folder_root}/getChats.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-QueryGetChatsResolver',
+            f'{self.config.prefix}-QueryGetChatsResolver',
             type_name='Query',
             field_name='getChats',
             code=appsync.Code.from_asset(get_chats_js),
@@ -143,7 +149,7 @@ class AppsyncAPI(Construct):
 
         create_startup_js = f'{folder_root}/createStartup.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationCreateStartupResolver',
+            f'{self.config.prefix}-MutationCreateStartupResolver',
             type_name='Mutation',
             field_name='createStartup',
             code=appsync.Code.from_asset(create_startup_js),
@@ -152,7 +158,7 @@ class AppsyncAPI(Construct):
 
         update_startup_js = f'{folder_root}/updateStartup.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationUpdateStartupResolver',
+            f'{self.config.prefix}-MutationUpdateStartupResolver',
             type_name='Mutation',
             field_name='updateStartup',
             code=appsync.Code.from_asset(update_startup_js),
@@ -161,7 +167,7 @@ class AppsyncAPI(Construct):
 
         query_startup_js = f'{folder_root}/getStartupProfile.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-QueryGetStartupResolver',
+            f'{self.config.prefix}-QueryGetStartupResolver',
             type_name='Query',
             field_name='getStartupProfile',
             code=appsync.Code.from_asset(query_startup_js),
@@ -176,7 +182,7 @@ class AppsyncAPI(Construct):
 
         create_enabler_js = f'{folder_root}/createEnabler.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationCreateEnablerResolver',
+            f'{self.config.prefix}-MutationCreateEnablerResolver',
             type_name='Mutation',
             field_name='createEnabler',
             code=appsync.Code.from_asset(create_enabler_js),
@@ -185,7 +191,7 @@ class AppsyncAPI(Construct):
 
         update_enabler_js = f'{folder_root}/updateEnabler.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-MutationUpdateEnablerResolver',
+            f'{self.config.prefix}-MutationUpdateEnablerResolver',
             type_name='Mutation',
             field_name='updateEnabler',
             code=appsync.Code.from_asset(update_enabler_js),
@@ -194,7 +200,7 @@ class AppsyncAPI(Construct):
 
         query_enabler_js = f'{folder_root}/getEnablerProfile.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-QueryGetEnablerResolver',
+            f'{self.config.prefix}-QueryGetEnablerResolver',
             type_name='Query',
             field_name='getEnablerProfile',
             code=appsync.Code.from_asset(query_enabler_js),
@@ -209,7 +215,7 @@ class AppsyncAPI(Construct):
 
         query_entity_list_js = f'{folder_root}/getMapList.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.main_resources_name}-{self.config.stage}-QueryGetEntityListResolver',
+            f'{self.config.prefix}-QueryGetEntityListResolver',
             type_name='Query',
             field_name='getMapList',
             code=appsync.Code.from_asset(query_entity_list_js),
