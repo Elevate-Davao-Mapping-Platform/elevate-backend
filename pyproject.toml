@@ -15,6 +15,8 @@ boto3-stubs = {extras = ["bedrock-agent-runtime"], version = "^1.37.15"}
 pynamodb = "6.0.1"
 pydantic = "2.10.6"
 pytz = "2025.1"
+gql = "3.5.2"
+aiohttp = "3.11.14"
 
 [tool.poetry.group.dev.dependencies]
 aws-cdk-lib = "2.185.0"

@@ -1,7 +1,7 @@
 from os import path
-from typing import Optional
 
 import aws_cdk.aws_logs as logs
+from aws_cdk import Duration, Expiration
 from aws_cdk import aws_appsync as appsync
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
@@ -20,10 +20,6 @@ class AppsyncAPI(Construct):
 
         super().__init__(scope, construct_id, **kwargs)
 
-        self.graphql_url: str
-        self.api_key: Optional[str]
-        self.api_id: str
-
         self.config = config
         self.api = self._create_api(cognito_user_pool, entity_table)
 
@@ -39,6 +35,7 @@ class AppsyncAPI(Construct):
         self.graphql_url = self.api.graphql_url
         self.api_key = self.api.api_key
         self.api_id = self.api.api_id
+        self.arn = self.api.arn
 
     def _create_api(
         self, cognito_user_pool: cognito.UserPool, entity_table: dynamodb.Table
@@ -54,7 +51,11 @@ class AppsyncAPI(Construct):
             definition=appsync.Definition.from_file(gql_schema),
             authorization_config=appsync.AuthorizationConfig(
                 default_authorization=appsync.AuthorizationMode(
-                    authorization_type=appsync.AuthorizationType.API_KEY
+                    authorization_type=appsync.AuthorizationType.API_KEY,
+                    api_key_config=appsync.ApiKeyConfig(
+                        expires=Expiration.after(Duration.days(365)),
+                        name=f'{self.config.prefix}-appsync-api-key',
+                    ),
                 ),
                 additional_authorization_modes=[
                     appsync.AuthorizationMode(

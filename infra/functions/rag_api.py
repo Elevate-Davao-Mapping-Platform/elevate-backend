@@ -6,6 +6,7 @@ from aws_cdk.aws_lambda_python_alpha import (
 )
 from constructs import Construct
 
+from infra.appsync.appsync import AppsyncAPI
 from infra.config import Config
 
 
@@ -22,6 +23,7 @@ class LLMRAGAPI(Construct):
         **kwargs,
     ) -> None:
         self.entity_table = kwargs.pop('entity_table', None)
+        self.appsync_api = kwargs.pop('appsync_api', None)
 
         super().__init__(scope, construct_id)
 
@@ -55,7 +57,7 @@ class LLMRAGAPI(Construct):
         # Grant permission to invoke Bedrock
         lambda_role.add_to_policy(
             aws_iam.PolicyStatement(
-                actions=['bedrock:InvokeModel'],
+                actions=['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
                 resources=[
                     'arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
                     'arn:aws:bedrock:*:*:foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0',
@@ -130,6 +132,23 @@ class LLMRAGAPI(Construct):
                     'local_tests',
                 ],
             ),
+        )
+
+    def set_appsync_api(self, appsync_api: AppsyncAPI):
+        """
+        Set the AppSync API for the Lambda function.
+
+        :param AppsyncAPI appsync_api: The AppSync API to set.
+        """
+        self.appsync_api = appsync_api
+        self.lambda_rag_api.add_environment('GRAPHQL_URL', self.appsync_api.graphql_url)
+        self.lambda_rag_api.add_environment('API_KEY', self.appsync_api.api_key)
+
+        self.lambda_rag_api.add_to_role_policy(
+            aws_iam.PolicyStatement(
+                actions=['appsync:GraphQL'],
+                resources=[f'{self.appsync_api.arn}/*'],
+            )
         )
 
     def generate_cloudformation_outputs(self):
