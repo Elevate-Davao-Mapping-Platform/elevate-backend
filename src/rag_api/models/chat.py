@@ -35,3 +35,10 @@ class ChatOut(BaseModel):
     chatTopicId: str = Field(..., description='The chat topic ID')
     userId: str = Field(..., description='The user ID')
     entryId: str = Field(..., description='The chat ID')
+
+
+class SendChatChunkIn(BaseModel):
+    chatTopicId: str = Field(..., description='The chat topic ID')
+    userId: str = Field(..., description='The user ID')
+    entryId: str = Field(..., description='The chat ID')
+    response: str = Field(..., description='The response to send')

@@ -59,6 +59,8 @@ class ElevateBeStack(Stack):
             entity_table=entity_table.entity_table,
         )
 
+        llm_rag_api.set_appsync_api(api)
+
         # Create S3 bucket using the new construct
         general_bucket_construct = GeneralBucketConstruct(
             self, 'GeneralBucketConstruct', config=self.config
