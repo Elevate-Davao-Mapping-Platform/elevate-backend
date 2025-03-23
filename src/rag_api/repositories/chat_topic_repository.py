@@ -26,7 +26,7 @@ class ChatTopicRepository:
 
     def store_chat_topic(self, chat_topic_in: ChatTopicIn) -> Tuple[HTTPStatus, ChatTopic, str]:
         """Store a new ChatTopic entry."""
-        entry_id = str(uuid.uuid4())
+        entry_id = chat_topic_in.entryId or str(uuid.uuid4())
         hash_key = f'{self.core_obj_key}#{chat_topic_in.userId}'
         range_key = f'{self.topic_key}#{entry_id}'
         current_date = datetime.now(tz=pytz.timezone('Asia/Manila')).isoformat()

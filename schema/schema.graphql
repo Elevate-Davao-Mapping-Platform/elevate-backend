@@ -218,6 +218,13 @@ type MutationResponse {
   success: Boolean
 }
 
+type SendChatResponse {
+  entryId: String
+  message: String
+  success: Boolean
+  chatTopicId: String
+}
+
 union Entity = Startup | Enabler
 
 # Root types
@@ -230,7 +237,7 @@ type Query {
 }
 
 type Mutation {
-  sendChat(input: ChatIn!): MutationResponse! @aws_api_key
+  sendChat(input: ChatIn!): SendChatResponse! @aws_api_key
   sendChatChunk(input: ChatChunkInput!): ChatOut! @aws_api_key
   createStartup(input: StartupInput!): MutationResponse! @aws_api_key
   updateStartup(input: StartupInput!, startupId: String!): MutationResponse!

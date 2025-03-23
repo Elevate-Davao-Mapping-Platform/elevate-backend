@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 from pynamodb.attributes import UnicodeAttribute
 from rag_api.models.entity import Entities
@@ -13,3 +15,4 @@ class ChatTopic(Entities, discriminator='CHAT_TOPIC'):
 class ChatTopicIn(BaseModel):
     title: str
     userId: str
+    entryId: Optional[str] = None

@@ -53,7 +53,7 @@ class LLMUsecase:
                 body=json.dumps(
                     {
                         'anthropic_version': 'bedrock-2023-05-31',
-                        'max_tokens': 1000,
+                        'max_tokens': 4096,
                         'messages': [{'role': 'user', 'content': prompt}],
                     }
                 ),
