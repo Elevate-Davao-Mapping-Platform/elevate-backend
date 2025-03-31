@@ -126,7 +126,12 @@ class LLMRAGAPI(Construct):
             role=lambda_role,
             layers=[self.rag_api_layer],
             bundling=BundlingOptions(
-                asset_excludes=['**/__pycache__', 'local_tests', 'suggestions'],
+                asset_excludes=[
+                    '**/__pycache__',
+                    'local_tests',
+                    'generate_suggestions',
+                    'get_suggestions',
+                ],
             ),
         )
 
