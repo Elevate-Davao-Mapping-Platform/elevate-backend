@@ -10,7 +10,7 @@ from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
 
 
-class SuggestionsCron(Construct):
+class GetSuggestions(Construct):
     """
     Class to create the infrastructure on AWS.
     """
@@ -45,45 +45,24 @@ class SuggestionsCron(Construct):
             ],
         )
 
-        # Grant permission to invoke Bedrock
-        lambda_role.add_to_policy(
-            aws_iam.PolicyStatement(
-                actions=['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
-                resources=[
-                    'arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
-                    'arn:aws:bedrock:*:*:foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0',
-                ],
-            )
-        )
-
-        lambda_role.add_to_policy(
-            aws_iam.PolicyStatement(
-                actions=['bedrock:Retrieve'],
-                resources=['arn:aws:bedrock:us-east-1:058264295349:knowledge-base/ORGCXIYNDH'],
-            )
-        )
-
         lambda_role.add_to_policy(
             aws_iam.PolicyStatement(
                 actions=[
                     'dynamodb:Query',
-                    'dynamodb:GetItem',
-                    'dynamodb:PutItem',
-                    'dynamodb:Scan',
+                    'dynamodb:BatchGetItem',
                 ],
                 resources=[self.entity_table.table_arn],
             )
         )
 
-        # Create the Lambda function using Docker
-        self.suggestions_cron_layer = PythonLayerVersion(
+        self.get_suggestions_layer = PythonLayerVersion(
             self,
-            f'{self.config.prefix}-suggestions-cron-layer',
-            layer_version_name=f'{self.config.prefix}-suggestions-cron-layer',
-            entry='src/generate_suggestions/layer',
+            f'{self.config.prefix}-get-suggestions-layer',
+            layer_version_name=f'{self.config.prefix}-get-suggestions-layer',
+            entry='src/get_suggestions/layer',
             compatible_runtimes=[aws_lambda.Runtime.PYTHON_3_12],
             compatible_architectures=[aws_lambda.Architecture.X86_64],
-            description='Dependencies for Suggestions Cron Job Lambda',
+            description='Dependencies for Get Suggestions Lambda',
             removal_policy=RemovalPolicy.DESTROY,
             bundling=BundlingOptions(
                 asset_excludes=[
@@ -92,14 +71,14 @@ class SuggestionsCron(Construct):
             ),
         )
 
-        self.lambda_suggestions_cron = PythonFunction(
+        self.get_suggestions_lambda = PythonFunction(
             self,
-            f'{self.config.prefix}-suggestions-cron',
-            function_name=f'{self.config.prefix}-suggestions-cron',
+            f'{self.config.prefix}-get-suggestions',
+            function_name=f'{self.config.prefix}-get-suggestions',
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             handler='handler',
             entry='src',
-            index='generate_suggestions/handler.py',
+            index='get_suggestions/handler.py',
             timeout=Duration.minutes(2),
             log_retention=aws_logs.RetentionDays.ONE_MONTH,
             memory_size=512,
@@ -108,15 +87,14 @@ class SuggestionsCron(Construct):
                 'LOG_LEVEL': self.config.log_level,
                 'REGION': self.config.region,
                 'ENTITIES_TABLE': self.entity_table.table_name,
-                'BEDROCK_AWS_REGION': self.config.bedrock_region,
                 'POWERTOOLS_LOG_LEVEL': 'DEBUG' if self.config.stage == 'dev' else 'INFO',
-                'POWERTOOLS_SERVICE_NAME': f'{self.config.prefix}-suggestions-service',
+                'POWERTOOLS_SERVICE_NAME': f'{self.config.prefix}-get-suggestions-service',
                 'POWERTOOLS_LOGGER_LOG_EVENT': 'true' if self.config.stage == 'dev' else 'false',
             },
             role=lambda_role,
-            layers=[self.suggestions_cron_layer],
+            layers=[self.get_suggestions_layer],
             bundling=BundlingOptions(
-                asset_excludes=['**/__pycache__', 'local_tests', 'get_suggestions', 'rag_api'],
+                asset_excludes=['**/__pycache__', 'local_tests', 'generate_suggestions', 'rag_api'],
             ),
         )
 
@@ -127,6 +105,6 @@ class SuggestionsCron(Construct):
         CfnOutput(
             self,
             'FunctionArn',
-            value=self.lambda_suggestions_cron.function_arn,
+            value=self.get_suggestions_lambda.function_arn,
             description='Function ARN',
         )

@@ -27,7 +27,7 @@ class AppsyncAPI(Construct):
 
         # Set up data sources and resolvers
         entity_table_data_source = self._setup_entity_table_data_source(entity_table)
-        self._setup_llm_resolvers(llm_rag_api, entity_table_data_source)
+        self._setup_llm_resolvers(llm_rag_api)
         self._setup_chat_resolvers(entity_table_data_source)
         self._setup_startup_resolvers(entity_table_data_source)
         self._setup_enabler_resolvers(entity_table_data_source)
@@ -230,10 +230,9 @@ class AppsyncAPI(Construct):
             f'{self.config.prefix}-suggestion-data-source',
             get_suggestions_lambda,
         )
+
         suggestion_data_source.create_resolver(
             f'{self.config.prefix}-QueryGetSuggestionsResolver',
             type_name='Query',
             field_name='getSuggestions',
-            request_template=appsync.MappingTemplate.lambda_request(),
-            response_template=appsync.MappingTemplate.lambda_result(),
         )

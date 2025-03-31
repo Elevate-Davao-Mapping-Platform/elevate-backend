@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 from aws_lambda_powertools import Logger
 from pynamodb.connection import Connection
-from pynamodb.exceptions import PynamoDBConnectionError, ScanError, TableDoesNotExist
+from pynamodb.exceptions import GetError, PynamoDBConnectionError, TableDoesNotExist
 from shared_modules.models.dynamodb.entity import Entity
 from shared_modules.models.schema.entity import EntitySchema
 
@@ -14,19 +14,19 @@ class EntityRepository:
         self.conn = Connection(region=os.getenv('REGION'))
         self.logger = Logger()
 
-    def get_entity_list(
-        self, entity_type: str = None
+    def batch_get_entities_with_suggestions(
+        self, suggestion_item_keys: List[Tuple[str, str]]
     ) -> Tuple[HTTPStatus, List[EntitySchema], str]:
-        """Get a list of all entities (Entity and/or enablers) using GSI1PK index.
+        """Get a list of all entities (Entity and/or enablers)
 
-        :param entity_type: Optional filter for entity type ('STARTUP' or 'ENABLER')
-        :type entity_type: str
+        :param suggestion_item_keys: List of suggestion item keys
+        :type suggestion_item_keys: List[Tuple[str, str]]
 
         :return: Tuple containing HTTP status, list of entity profiles, and a message
         :rtype: Tuple[HTTPStatus, List[EntitySchema], str]
         """
         try:
-            entities: List[Entity] = Entity.gsi1_index.scan()
+            entities: List[Entity] = Entity.batch_get(suggestion_item_keys)
             processed_entities = []
             current_entity = None
             current_entity_id = None
@@ -111,8 +111,8 @@ class EntityRepository:
 
             return HTTPStatus.OK, processed_entities, 'Success'
 
-        except ScanError as e:
-            self.logger.error(f'Error scanning DynamoDB: {e}')
+        except GetError as e:
+            self.logger.error(f'Error getting entities: {e}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, [], str(e)
 
         except PynamoDBConnectionError as e:

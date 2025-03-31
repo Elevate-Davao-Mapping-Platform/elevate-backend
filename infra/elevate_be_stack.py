@@ -6,6 +6,7 @@ from infra.cognito.identity_pool import IdentityPoolConstruct
 from infra.cognito.user_pool import UserPoolConstruct
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
+from infra.functions.get_suggestions import GetSuggestions
 from infra.functions.rag_api import LLMRAGAPI
 from infra.functions.suggestions_cron import SuggestionsCron
 from infra.s3.general_bucket import GeneralBucketConstruct
@@ -41,11 +42,19 @@ class ElevateBeStack(Stack):
         cognito_user_pool = cognito_construct.user_pool
         cognito_user_pool_client = cognito_construct.user_pool_client
 
-        # LLM RAG API
+        # LLM RAG Lambda
         entity_table = EntityTable(self, 'EntityTable', config=self.config)
         llm_rag_api = LLMRAGAPI(
             self,
             'LLMRAGAPI',
+            config=self.config,
+            entity_table=entity_table,
+        )
+
+        # Get Suggestions Lambda
+        get_suggestions = GetSuggestions(
+            self,
+            'GetSuggestions',
             config=self.config,
             entity_table=entity_table,
         )
@@ -58,6 +67,7 @@ class ElevateBeStack(Stack):
             cognito_user_pool=cognito_user_pool,
             llm_rag_api=llm_rag_api,
             entity_table=entity_table.entity_table,
+            get_suggestions_lambda=get_suggestions.get_suggestions_lambda,
         )
 
         llm_rag_api.set_appsync_api(api)
@@ -67,6 +77,7 @@ class ElevateBeStack(Stack):
             self,
             'SuggestionsCron',
             config=self.config,
+            entity_table=entity_table,
         )
 
         # Create S3 bucket using the new construct

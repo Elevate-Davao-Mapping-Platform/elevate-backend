@@ -155,17 +155,6 @@ input PortfolioItemInput {
   roleAndImpact: String
 }
 
-type Suggestion {
-  suggestionId: ID!
-  role: String!
-  name: String!
-  logoObjectKey: String
-  dateFounded: String
-  industries: [String!]
-  industryFocus: [String!]
-  description: String
-}
-
 type Enabler {
   enablerId: String!
   enablerName: String!
@@ -233,7 +222,7 @@ type Query {
   getStartupProfile(startupId: String!): Startup! @aws_api_key
   getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
   getMapList(entityType: EntityType): [Entity!] @aws_api_key
-  getSuggestions(entityType: EntityType!, entityId: String!): [Suggestion!]! @aws_api_key
+  getSuggestions(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
 }
 
 type Mutation {

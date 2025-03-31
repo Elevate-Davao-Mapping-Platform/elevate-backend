@@ -93,14 +93,6 @@ class FounderMap(BaseModel):
 class EntitySchema(BaseModel):
     model_config = ConfigDict(extra='ignore')
 
-    # Primary keys
-    hashKey: Optional[str] = Field(
-        None, description='Primary identifier - technical requirement for database operations'
-    )
-    rangeKey: Optional[str] = Field(
-        None, description='Secondary identifier - technical requirement for database operations'
-    )
-
     # Common attributes
     description: Optional[str] = Field(
         None, description='Entity overview - crucial for initial matching assessment'
@@ -110,6 +102,9 @@ class EntitySchema(BaseModel):
     )
     dateFounded: Optional[str] = Field(
         None, description='Establishment date - indicates maturity and experience level'
+    )
+    email: Optional[str] = Field(
+        None, description='Email address - for communication and verification purposes'
     )
 
     # ENABLER attributes
