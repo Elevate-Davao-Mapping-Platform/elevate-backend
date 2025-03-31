@@ -70,18 +70,6 @@ export function response(ctx) {
                 break;
         }
 
-        if (item.rangeKey.startsWith('STARTUP#SUGGESTION')) {
-            const suggestion = {
-                suggestionId: item.suggestionId,
-                role: item.role,
-                name: item.name,
-                logoObjectKey: item.logoObjectKey,
-                dateFounded: item.dateFounded,
-                industries: item.industries,
-                description: item.description,
-            }
-            suggestions.push(suggestion);
-        }
     });
 
     startup.suggestions = suggestions;
