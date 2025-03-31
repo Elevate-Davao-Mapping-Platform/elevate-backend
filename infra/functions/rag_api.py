@@ -8,6 +8,7 @@ from constructs import Construct
 
 from infra.appsync.appsync import AppsyncAPI
 from infra.config import Config
+from infra.dynamodb.entity_table import EntityTable
 
 
 class LLMRAGAPI(Construct):
@@ -22,7 +23,7 @@ class LLMRAGAPI(Construct):
         config: Config,
         **kwargs,
     ) -> None:
-        self.entity_table = kwargs.pop('entity_table', None)
+        self.entity_table: EntityTable = kwargs.pop('entity_table', None)
         self.appsync_api = kwargs.pop('appsync_api', None)
 
         super().__init__(scope, construct_id)
@@ -71,7 +72,6 @@ class LLMRAGAPI(Construct):
             )
         )
 
-        # Add the entity table to the Lambda function environment variables
         lambda_role.add_to_policy(
             aws_iam.PolicyStatement(
                 actions=[
