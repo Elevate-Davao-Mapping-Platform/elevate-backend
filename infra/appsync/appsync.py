@@ -5,6 +5,7 @@ from aws_cdk import Duration, Expiration
 from aws_cdk import aws_appsync as appsync
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
+from aws_cdk import aws_lambda as lambda_
 from constructs import Construct
 
 from infra.config import Config
@@ -17,6 +18,7 @@ class AppsyncAPI(Construct):
         cognito_user_pool: cognito.UserPool = kwargs.pop('cognito_user_pool', None)
         llm_rag_api = kwargs.pop('llm_rag_api', None)
         entity_table: dynamodb.Table = kwargs.pop('entity_table', None)
+        get_suggestions_lambda: lambda_.Function = kwargs.pop('get_suggestions_lambda', None)
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -30,6 +32,7 @@ class AppsyncAPI(Construct):
         self._setup_startup_resolvers(entity_table_data_source)
         self._setup_enabler_resolvers(entity_table_data_source)
         self._setup_entity_list_resolvers(entity_table_data_source)
+        self._setup_suggestion_resolvers(get_suggestions_lambda)
 
         # Store API outputs
         self.graphql_url = self.api.graphql_url
@@ -86,9 +89,7 @@ class AppsyncAPI(Construct):
             entity_table,
         )
 
-    def _setup_llm_resolvers(
-        self, llm_rag_api, entity_table_data_source: appsync.DynamoDbDataSource
-    ) -> None:
+    def _setup_llm_resolvers(self, llm_rag_api) -> None:
         """Sets up Lambda data source and resolvers for LLM functionality."""
         llm_service_ds = self.api.add_lambda_data_source(
             f'{self.config.prefix}-llm-service-data-source',
@@ -221,4 +222,18 @@ class AppsyncAPI(Construct):
             field_name='getMapList',
             code=appsync.Code.from_asset(query_entity_list_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+    def _setup_suggestion_resolvers(self, get_suggestions_lambda: lambda_.Function) -> None:
+        """Sets up DynamoDB data source and resolvers for suggestion functionality."""
+        suggestion_data_source = self.api.add_lambda_data_source(
+            f'{self.config.prefix}-suggestion-data-source',
+            get_suggestions_lambda,
+        )
+        suggestion_data_source.create_resolver(
+            f'{self.config.prefix}-QueryGetSuggestionsResolver',
+            type_name='Query',
+            field_name='getSuggestions',
+            request_template=appsync.MappingTemplate.lambda_request(),
+            response_template=appsync.MappingTemplate.lambda_result(),
         )

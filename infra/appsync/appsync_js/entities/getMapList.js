@@ -71,7 +71,7 @@ export function response(ctx) {
                     });
                     break;
                 case 'STARTUP#CONTACTS':
-                    currentEntity.contacts = item.contacts;
+                    currentEntity.contacts = item.contacts || [];
                     break;
                 case 'STARTUP#MILESTONES':
                     currentEntity.milestones = item.milestones;
@@ -100,7 +100,7 @@ export function response(ctx) {
                     });
                     break;
                 case 'ENABLER#CONTACTS':
-                    currentEntity.contacts = item.contacts;
+                    currentEntity.contacts = item.contacts || [];
                     break;
                 case 'ENABLER#INVESTMENT_CRITERIA':
                     currentEntity.investmentCriteria = item.investmentCriteria;

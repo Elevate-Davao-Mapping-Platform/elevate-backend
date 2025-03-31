@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Union
 
 from aws_lambda_powertools import Logger
 from rag_api.constants.chat_constants import ChatType
@@ -7,6 +8,7 @@ from rag_api.models.chat_topic import ChatTopicIn
 from rag_api.repositories.chat_repository import ChatRepository
 from rag_api.repositories.chat_topic_repository import ChatTopicRepository
 from rag_api.usecases.llm_usecase import LLMUsecase
+from shared_modules.models.schema.message import ErrorResponse
 
 
 class ChatUsecase:
@@ -16,7 +18,7 @@ class ChatUsecase:
         self.llm_usecase = LLMUsecase()
         self.logger = Logger()
 
-    def process_chat(self, chat_prompt_in: ChatPromptIn):
+    def process_chat(self, chat_prompt_in: ChatPromptIn) -> Union[ChatOut, ErrorResponse]:
         """
         Process a user prompt and generate a response using a language model.
 
@@ -43,10 +45,10 @@ class ChatUsecase:
                 )
             )
             if status != HTTPStatus.OK:
-                return {
-                    'response': message,
-                    'status': status,
-                }
+                return ErrorResponse(
+                    response=message,
+                    status=status,
+                )
 
             chat_topic_id = chat_topic.entryId
             chat_prompt_in.chatTopicId = chat_topic_id
@@ -55,7 +57,7 @@ class ChatUsecase:
             _, chats, _ = self.chat_repository.get_chats_in_topic(
                 chat_topic_id, chat_prompt_in.userId
             )
-            chats_sorted = sorted(chats, key=lambda x: x.createDate, reverse=True)
+            chats_sorted = sorted(chats, key=lambda x: x.createdAt, reverse=True)
             chat_history = [chat.message for chat in chats_sorted]
 
         # Store the prompt chat
@@ -70,10 +72,10 @@ class ChatUsecase:
             chat_in=user_prompt_chat_in,
         )
         if status != HTTPStatus.OK:
-            return {
-                'response': message,
-                'status': status,
-            }
+            return ErrorResponse(
+                response=message,
+                status=status,
+            )
 
         chat_history_for_prompt = '\n'.join(chat_history) if chat_history else 'No Chat History'
         llm_response = self.llm_usecase.generate_response(chat_prompt_in, chat_history_for_prompt)
@@ -89,10 +91,10 @@ class ChatUsecase:
             chat_in=llm_response_chat_in,
         )
         if status != HTTPStatus.OK:
-            return {
-                'response': message,
-                'status': status,
-            }
+            return ErrorResponse(
+                response=message,
+                status=status,
+            )
 
         chat_data = ChatOut(
             response=llm_response,
@@ -100,4 +102,4 @@ class ChatUsecase:
             userId=chat_prompt_in.userId,
             entryId=user_prompt_chat.entryId,
         )
-        return chat_data.model_dump()
+        return chat_data

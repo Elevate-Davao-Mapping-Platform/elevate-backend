@@ -13,8 +13,8 @@ from pynamodb.exceptions import (
     QueryError,
     TableDoesNotExist,
 )
-from rag_api.constants.common_constants import EntryStatus
 from rag_api.models.chat_topic import ChatTopic, ChatTopicIn
+from shared_modules.constants.common_constants import EntryStatus
 
 
 class ChatTopicRepository:
@@ -35,7 +35,7 @@ class ChatTopicRepository:
             chat_topic_entry = ChatTopic(
                 hashKey=hash_key,
                 rangeKey=range_key,
-                createDate=current_date,
+                createdAt=current_date,
                 updateDate=current_date,
                 entryStatus=EntryStatus.ACTIVE.value,
                 entryId=entry_id,

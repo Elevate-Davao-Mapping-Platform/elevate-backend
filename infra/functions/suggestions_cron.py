@@ -6,37 +6,26 @@ from aws_cdk.aws_lambda_python_alpha import (
 )
 from constructs import Construct
 
-from infra.appsync.appsync import AppsyncAPI
 from infra.config import Config
 
 
-class LLMRAGAPI(Construct):
+class SuggestionsCron(Construct):
     """
     Class to create the infrastructure on AWS.
     """
 
-    def __init__(
-        self,
-        scope: Construct,
-        construct_id: str,
-        config: Config,
-        **kwargs,
-    ) -> None:
-        self.entity_table = kwargs.pop('entity_table', None)
-        self.appsync_api = kwargs.pop('appsync_api', None)
+    def __init__(self, scope: Construct, id: str, config: Config, **kwargs) -> None:
+        super().__init__(scope, id, **kwargs)
 
-        super().__init__(scope, construct_id)
-
-        # Store the inputs
         self.config = config
 
-        # Create resources
         self.create_lambda_function()
         self.generate_cloudformation_outputs()
 
     def create_lambda_function(self):
         """
-        Create the Lambda Function the RAG API and create necessary IAM roles and permissions.
+        Create the Lambda Function for the Suggestions Cron Job
+        and create necessary IAM roles and permissions.
         """
         # Define the IAM role
         lambda_role = aws_iam.Role(
@@ -71,28 +60,15 @@ class LLMRAGAPI(Construct):
             )
         )
 
-        # Add the entity table to the Lambda function environment variables
-        lambda_role.add_to_policy(
-            aws_iam.PolicyStatement(
-                actions=[
-                    'dynamodb:Query',
-                    'dynamodb:GetItem',
-                    'dynamodb:PutItem',
-                    'dynamodb:Scan',
-                ],
-                resources=[self.entity_table.table_arn],
-            )
-        )
-
         # Create the Lambda function using Docker
-        self.rag_api_layer = PythonLayerVersion(
+        self.suggestions_cron_layer = PythonLayerVersion(
             self,
-            f'{self.config.prefix}-rag-api-layer',
-            layer_version_name=f'{self.config.prefix}-rag-api-layer',
-            entry='src/rag_api/layer',
+            f'{self.config.prefix}-suggestions-cron-layer',
+            layer_version_name=f'{self.config.prefix}-suggestions-cron-layer',
+            entry='src/suggestions_cron/layer',
             compatible_runtimes=[aws_lambda.Runtime.PYTHON_3_12],
             compatible_architectures=[aws_lambda.Architecture.X86_64],
-            description='Dependencies for RAG API Lambda',
+            description='Dependencies for Suggestions Cron Job Lambda',
             removal_policy=RemovalPolicy.DESTROY,
             bundling=BundlingOptions(
                 asset_excludes=[
@@ -101,14 +77,14 @@ class LLMRAGAPI(Construct):
             ),
         )
 
-        self.lambda_rag_api = PythonFunction(
+        self.lambda_suggestions_cron = PythonFunction(
             self,
-            f'{self.config.prefix}-rag-api',
-            function_name=f'{self.config.prefix}-rag-api',
+            f'{self.config.prefix}-suggestions-cron',
+            function_name=f'{self.config.prefix}-suggestions-cron',
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             handler='handler',
             entry='src',
-            index='rag_api/handler.py',
+            index='suggestions_cron/handler.py',
             timeout=Duration.minutes(2),
             log_retention=aws_logs.RetentionDays.ONE_MONTH,
             memory_size=512,
@@ -117,34 +93,15 @@ class LLMRAGAPI(Construct):
                 'LOG_LEVEL': self.config.log_level,
                 'REGION': self.config.region,
                 'BEDROCK_AWS_REGION': self.config.bedrock_region,
-                'ENTITIES_TABLE': self.entity_table.table_name,
-                'KNOWLEDGE_BASE_ID': 'ORGCXIYNDH',
                 'POWERTOOLS_LOG_LEVEL': 'DEBUG' if self.config.stage == 'dev' else 'INFO',
-                'POWERTOOLS_SERVICE_NAME': f'{self.config.prefix}-llm-service',
+                'POWERTOOLS_SERVICE_NAME': f'{self.config.prefix}-suggestions-service',
                 'POWERTOOLS_LOGGER_LOG_EVENT': 'true' if self.config.stage == 'dev' else 'false',
             },
             role=lambda_role,
-            layers=[self.rag_api_layer],
+            layers=[self.suggestions_cron_layer],
             bundling=BundlingOptions(
-                asset_excludes=['**/__pycache__', 'local_tests', 'suggestions'],
+                asset_excludes=['**/__pycache__', 'local_tests', 'generate_suggestions'],
             ),
-        )
-
-    def set_appsync_api(self, appsync_api: AppsyncAPI):
-        """
-        Set the AppSync API for the Lambda function.
-
-        :param AppsyncAPI appsync_api: The AppSync API to set.
-        """
-        self.appsync_api = appsync_api
-        self.lambda_rag_api.add_environment('GRAPHQL_URL', self.appsync_api.graphql_url)
-        self.lambda_rag_api.add_environment('API_KEY', self.appsync_api.api_key)
-
-        self.lambda_rag_api.add_to_role_policy(
-            aws_iam.PolicyStatement(
-                actions=['appsync:GraphQL'],
-                resources=[f'{self.appsync_api.arn}/*'],
-            )
         )
 
     def generate_cloudformation_outputs(self):
@@ -153,14 +110,7 @@ class LLMRAGAPI(Construct):
         """
         CfnOutput(
             self,
-            'DeploymentEnvironment',
-            value=self.config.stage,
-            description='Deployment environment',
-        )
-
-        CfnOutput(
-            self,
             'FunctionArn',
-            value=self.lambda_rag_api.function_arn,
+            value=self.lambda_suggestions_cron.function_arn,
             description='Function ARN',
         )

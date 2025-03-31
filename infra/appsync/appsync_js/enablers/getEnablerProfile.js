@@ -40,6 +40,8 @@ export function response(ctx) {
         enablerId: enablerId,
     };
 
+    const suggestions = [];
+
     // Process each item based on its rangeKey
     items.forEach(item => {
         switch (item.rangeKey) {
@@ -71,7 +73,22 @@ export function response(ctx) {
                 enabler.portfolio = item.portfolio;
                 break;
         }
+
+        if (item.rangeKey.startsWith('ENABLER#SUGGESTION')) {
+            const suggestion = {
+                suggestionId: item.suggestionId,
+                role: item.role,
+                name: item.name,
+                logoObjectKey: item.logoObjectKey,
+                dateFounded: item.dateFounded,
+                industryFocus: item.industryFocus,
+                description: item.description,
+            }
+            suggestions.push(suggestion);
+        }
     });
+
+    enabler.suggestions = suggestions;
 
     return enabler;
 }
