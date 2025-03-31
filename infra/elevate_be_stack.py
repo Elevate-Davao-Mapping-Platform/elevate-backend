@@ -7,6 +7,7 @@ from infra.cognito.user_pool import UserPoolConstruct
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
 from infra.functions.rag_api import LLMRAGAPI
+from infra.functions.suggestions_cron import SuggestionsCron
 from infra.s3.general_bucket import GeneralBucketConstruct
 
 
@@ -60,6 +61,13 @@ class ElevateBeStack(Stack):
         )
 
         llm_rag_api.set_appsync_api(api)
+
+        # Suggestions Cron Job
+        SuggestionsCron(
+            self,
+            'SuggestionsCron',
+            config=self.config,
+        )
 
         # Create S3 bucket using the new construct
         general_bucket_construct = GeneralBucketConstruct(

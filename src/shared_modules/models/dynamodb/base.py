@@ -15,8 +15,4 @@ class Entities(Model):
     hashKey = UnicodeAttribute(hash_key=True)
     rangeKey = UnicodeAttribute(range_key=True)
 
-    entryStatus = UnicodeAttribute(null=False)
-    entryId = UnicodeAttribute(null=False)
-
     createdAt = UnicodeAttribute(null=True)
-    updateDate = UnicodeAttribute(null=True)

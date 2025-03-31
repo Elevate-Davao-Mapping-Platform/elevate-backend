@@ -24,4 +24,5 @@ class ChatController:
         :param ChatPromptIn chat_in: The user prompt to generate a response for.
         :return dict: A dictionary containing the response and the status code.
         """
-        return self.chat_usecase.process_chat(chat_in)
+        response = self.chat_usecase.process_chat(chat_in)
+        return response.model_dump()

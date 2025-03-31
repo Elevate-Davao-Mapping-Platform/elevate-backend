@@ -40,6 +40,8 @@ export function response(ctx) {
         startupId: startupId,
     };
 
+    const suggestions = [];
+
     // Process each item based on its rangeKey
     items.forEach(item => {
         switch (item.rangeKey) {
@@ -67,7 +69,22 @@ export function response(ctx) {
                 startup.founders = item.founders;
                 break;
         }
+
+        if (item.rangeKey.startsWith('STARTUP#SUGGESTION')) {
+            const suggestion = {
+                suggestionId: item.suggestionId,
+                role: item.role,
+                name: item.name,
+                logoObjectKey: item.logoObjectKey,
+                dateFounded: item.dateFounded,
+                industries: item.industries,
+                description: item.description,
+            }
+            suggestions.push(suggestion);
+        }
     });
+
+    startup.suggestions = suggestions;
 
     return startup;
 }

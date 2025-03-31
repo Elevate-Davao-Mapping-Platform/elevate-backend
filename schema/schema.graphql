@@ -114,7 +114,6 @@ type Startup {
   milestones: [Milestone!]!
   founders: [Founder!]!
   createdAt: String
-  suggestions: [Suggestion!]
 }
 
 input StartupInput {
@@ -157,12 +156,13 @@ input PortfolioItemInput {
 }
 
 type Suggestion {
-  id: ID!
+  suggestionId: ID!
   role: String!
   name: String!
   logoObjectKey: String
   dateFounded: String
-  industries: [String!]!
+  industries: [String!]
+  industryFocus: [String!]
   description: String
 }
 
@@ -185,7 +185,6 @@ type Enabler {
   investmentCriteria: [InvestmentCriteria!]!
   portfolio: [PortfolioItem!]!
   createdAt: String
-  suggestions: [Suggestion!]
 }
 
 input EnablerInput {
@@ -234,6 +233,7 @@ type Query {
   getStartupProfile(startupId: String!): Startup! @aws_api_key
   getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
   getMapList(entityType: EntityType): [Entity!] @aws_api_key
+  getSuggestions(entityType: EntityType!, entityId: String!): [Suggestion!]! @aws_api_key
 }
 
 type Mutation {
