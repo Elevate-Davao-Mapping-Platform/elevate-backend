@@ -11,10 +11,12 @@ def handler(event, context):
     usecase = SuggestionsUsecase()
 
     arguments = event['arguments']
+    info = event['info']
 
     response = usecase.get_suggestions(
         entity_type=arguments.get('entityType'),
         entity_id=arguments.get('entityId'),
+        query_selection_set=info.get('selectionSetGraphQL'),
     )
 
     return response
