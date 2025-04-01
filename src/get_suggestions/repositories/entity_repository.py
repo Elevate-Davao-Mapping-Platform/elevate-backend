@@ -28,10 +28,9 @@ class EntityRepository:
         try:
             entities: List[Entity] = Entity.batch_get(suggestion_item_keys)
             processed_entities = []
-            current_entity = None
-            current_entity_id = None
+            entity_id_to_entity_map = {}
 
-            # Process items sequentially, assuming related items are adjacent
+            # Process all entities, regardless of order
             for entity in entities:
                 hash_key = entity.hashKey
                 entity_type = hash_key.split('#')[0]
@@ -39,16 +38,14 @@ class EntityRepository:
                 range_key = entity.rangeKey
                 entity_dict = entity.to_simple_dict()
 
-                # If this is a new entity, create a new entity object
-                if entity_id != current_entity_id:
-                    if current_entity:
-                        processed_entities.append(current_entity)
-
-                    current_entity = {
+                # Get or create entity object from map
+                if entity_id not in entity_id_to_entity_map:
+                    entity_id_to_entity_map[entity_id] = {
                         'startupId' if entity_type == 'STARTUP' else 'enablerId': entity_id,
                         '__typename': 'Startup' if entity_type == 'STARTUP' else 'Enabler',
                     }
-                    current_entity_id = entity_id
+
+                current_entity = entity_id_to_entity_map[entity_id]
 
                 # Add item data based on rangeKey and entity type
                 if entity_type == 'STARTUP':
@@ -69,10 +66,8 @@ class EntityRepository:
                         )
                     elif range_key == 'STARTUP#CONTACTS':
                         current_entity['contacts'] = entity_dict['contacts']
-
                     elif range_key == 'STARTUP#MILESTONES':
                         current_entity['milestones'] = entity_dict['milestones']
-
                     elif range_key == 'STARTUP#FOUNDERS':
                         current_entity['founders'] = entity_dict['founders']
 
@@ -95,19 +90,17 @@ class EntityRepository:
                                 'preferredBusinessModels': entity.preferredBusinessModels,
                             }
                         )
-
                     elif range_key == 'ENABLER#CONTACTS':
                         current_entity['contacts'] = entity_dict['contacts']
-
                     elif range_key == 'ENABLER#INVESTMENT_CRITERIA':
                         current_entity['investmentCriteria'] = entity_dict['investmentCriteria']
-
                     elif range_key == 'ENABLER#PORTFOLIO':
                         current_entity['portfolio'] = entity_dict['portfolio']
 
-            if current_entity:
-                entity_schema = EntitySchema(**current_entity)
-                processed_entities.append(entity_schema)
+            # Convert all entities in the map to EntitySchema objects
+            processed_entities = [
+                EntitySchema(**entity_data) for entity_data in entity_id_to_entity_map.values()
+            ]
 
             return HTTPStatus.OK, processed_entities, 'Success'
 

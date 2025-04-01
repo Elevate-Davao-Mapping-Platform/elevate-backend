@@ -47,6 +47,6 @@ class SuggestionRepository:
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, error_msg
 
         except Exception as e:
-            error_msg = f'Failed to get suggestions: {str(e)}'
+            error_msg = f'Internal server error: {str(e)}'
             self.logger.error(error_msg)
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, error_msg

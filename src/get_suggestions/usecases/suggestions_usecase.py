@@ -11,8 +11,22 @@ class SuggestionsUsecase:
     def __init__(self):
         self.suggestion_repository = SuggestionRepository()
         self.entity_repository = EntityRepository()
+        self.entity_field_map = {
+            EntityType.STARTUP: {
+                'contacts': 'STARTUP#CONTACTS',
+                'milestones': 'STARTUP#MILESTONES',
+                'founders': 'STARTUP#FOUNDERS',
+            },
+            EntityType.ENABLER: {
+                'contacts': 'ENABLER#CONTACTS',
+                'investmentCriteria': 'ENABLER#INVESTMENT_CRITERIA',
+                'portfolio': 'ENABLER#PORTFOLIO',
+            },
+        }
 
-    def get_suggestions(self, entity_type: EntityType, entity_id: str) -> List[EntitySchema]:
+    def get_suggestions(
+        self, entity_type: EntityType, entity_id: str, query_selection_set: str
+    ) -> List[EntitySchema]:
         """
         Get suggestions for a given entity.
 
@@ -25,10 +39,16 @@ class SuggestionsUsecase:
         if status != HTTPStatus.OK:
             return []
 
-        suggestion_item_keys = [
-            (suggestion.matchPairId, f'{suggestion.matchPairType}#METADATA')
-            for suggestion in suggestions
-        ]
+        suggestion_item_keys = []
+        for suggestion in suggestions:
+            suggestion_item_keys.append(
+                (suggestion.matchPairId, f'{suggestion.matchPairType}#METADATA')
+            )
+            # Add requested fields based on entity type
+            entity_fields = self.entity_field_map.get(suggestion.matchPairType, {})
+            for field, key_suffix in entity_fields.items():
+                if field in query_selection_set:
+                    suggestion_item_keys.append((suggestion.matchPairId, key_suffix))
 
         status, entities, _ = self.entity_repository.batch_get_entities_with_suggestions(
             suggestion_item_keys

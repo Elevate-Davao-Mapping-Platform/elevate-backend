@@ -42,7 +42,8 @@ class EntityRepository:
                 # If this is a new entity, create a new entity object
                 if entity_id != current_entity_id:
                     if current_entity:
-                        processed_entities.append(current_entity)
+                        entity_schema = EntitySchema(**current_entity)
+                        processed_entities.append(entity_schema)
 
                     current_entity = {
                         'startupId' if entity_type == 'STARTUP' else 'enablerId': entity_id,
