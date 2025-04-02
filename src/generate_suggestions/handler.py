@@ -8,11 +8,9 @@ logger = Logger()
 
 @logger.inject_lambda_context
 def handler(event, context):
-    _ = context
-
-    body = event['arguments']
+    _, _ = event, context
 
     suggestions_controller = SuggestionsController()
 
-    response = suggestions_controller.get_suggestions(body)
+    response = suggestions_controller.get_suggestions()
     return response
