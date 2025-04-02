@@ -15,7 +15,7 @@ class LLMUsecase:
     def __init__(self):
         self.logger = Logger()
         self.bedrock_model_id = 'us.anthropic.claude-3-5-haiku-20241022-v1:0'
-        self.bedrock_region = os.getenv('BEDROCK_REGION')
+        self.bedrock_region = os.getenv('BEDROCK_AWS_REGION')
         self.max_tokens = 4096
 
     def build_prompt(self, entities_json):

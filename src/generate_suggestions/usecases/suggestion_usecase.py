@@ -17,6 +17,8 @@ class SuggestionUsecase:
         self.logger = Logger()
 
     def get_suggestions(self) -> Union[SuggestionMatchList, ErrorResponse]:
+        self.logger.info('Getting suggestions')
+
         status, entity_list, message = self.entity_repository.get_entity_list()
         if status != HTTPStatus.OK:
             return ErrorResponse(
@@ -28,6 +30,8 @@ class SuggestionUsecase:
         if isinstance(suggestions, ErrorResponse):
             return suggestions
 
+        self.logger.info(f'Saving suggestions: {suggestions}')
+
         status, message, error = self.suggestion_repository.save_suggestions(suggestions)
         if status != HTTPStatus.OK:
             return ErrorResponse(
@@ -35,4 +39,5 @@ class SuggestionUsecase:
                 status=status,
             )
 
+        self.logger.info('Suggestions saved successfully')
         return suggestions
