@@ -1,4 +1,13 @@
-from aws_cdk import CfnOutput, Duration, RemovalPolicy, aws_iam, aws_lambda, aws_logs
+from aws_cdk import (
+    CfnOutput,
+    Duration,
+    RemovalPolicy,
+    aws_events,
+    aws_events_targets,
+    aws_iam,
+    aws_lambda,
+    aws_logs,
+)
 from aws_cdk.aws_lambda_python_alpha import (
     BundlingOptions,
     PythonFunction,
@@ -23,6 +32,7 @@ class SuggestionsCron(Construct):
         self.config = config
 
         self.create_lambda_function()
+        self.create_eventbridge_rule()
         self.generate_cloudformation_outputs()
 
     def create_lambda_function(self):
@@ -68,8 +78,8 @@ class SuggestionsCron(Construct):
                 actions=[
                     'dynamodb:Query',
                     'dynamodb:GetItem',
-                    'dynamodb:PutItem',
                     'dynamodb:Scan',
+                    'dynamodb:BatchWriteItem',
                 ],
                 resources=[self.entity_table.table_arn],
             )
@@ -118,6 +128,31 @@ class SuggestionsCron(Construct):
             bundling=BundlingOptions(
                 asset_excludes=['**/__pycache__', 'local_tests', 'get_suggestions', 'rag_api'],
             ),
+        )
+
+    def create_eventbridge_rule(self):
+        """
+        Create an EventBridge rule to trigger the Lambda function at midnight Philippine time (UTC+8)
+        """
+        ph_time_midnight_utc = '16'
+
+        lambda_schedule = aws_events.Schedule.cron(
+            hour=ph_time_midnight_utc,
+        )
+
+        rule = aws_events.Rule(
+            self,
+            f'{self.config.prefix}-suggestions-cron-rule',
+            schedule=lambda_schedule,
+            targets=[aws_events_targets.LambdaFunction(self.lambda_suggestions_cron)],
+        )
+
+        # Grant EventBridge permission to invoke the Lambda function
+        self.lambda_suggestions_cron.add_permission(
+            'AllowEventBridgeInvoke',
+            principal=aws_iam.ServicePrincipal('events.amazonaws.com'),
+            action='lambda:InvokeFunction',
+            source_arn=rule.rule_arn,
         )
 
     def generate_cloudformation_outputs(self):
