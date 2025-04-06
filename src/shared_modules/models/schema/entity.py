@@ -43,7 +43,7 @@ class PortfolioItemMap(BaseModel):
     dateSupported: Optional[str] = Field(
         None, description="Support timeline - shows enabler's historical engagement patterns"
     )
-    isSupportingToPresent: Optional[str] = Field(
+    isSupportingToPresent: Optional[bool] = Field(
         None, description='Current support status - indicates long-term commitment capability'
     )
     roleAndImpact: Optional[str] = Field(
