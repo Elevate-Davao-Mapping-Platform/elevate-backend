@@ -1,6 +1,7 @@
 import os
 
 from pynamodb.attributes import (
+    BooleanAttribute,
     ListAttribute,
     MapAttribute,
     NumberAttribute,
@@ -49,7 +50,7 @@ class InvestmentCriteria(MapAttribute):
 class PortfolioItem(MapAttribute):
     supportedStartupProject = UnicodeAttribute()
     dateSupported = UnicodeAttribute(null=True)
-    isSupportingToPresent = NumberAttribute()  # Boolean stored as 0/1
+    isSupportingToPresent = BooleanAttribute(null=True)
     roleAndImpact = UnicodeAttribute(null=True)
 
 
