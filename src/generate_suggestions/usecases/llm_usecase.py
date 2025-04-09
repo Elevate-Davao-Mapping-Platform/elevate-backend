@@ -121,9 +121,7 @@ class LLMUsecase:
         """
         try:
             prompt = self.build_prompt(entities)
-            response_text = self.invoke_llm(prompt)
-
-            return response_text
+            return self.invoke_llm(prompt)
 
         except Exception as e:
             self.logger.error(f'Error generating response: {e}')
