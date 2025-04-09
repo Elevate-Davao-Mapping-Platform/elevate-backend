@@ -11,6 +11,4 @@ def handler(event, context):
     _, _ = event, context
 
     suggestions_controller = SuggestionsController()
-
-    response = suggestions_controller.get_suggestions()
-    return response
+    return suggestions_controller.get_suggestions()

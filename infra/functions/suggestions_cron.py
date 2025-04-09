@@ -137,7 +137,7 @@ class SuggestionsCron(Construct):
         ph_time_midnight_utc = '16'
 
         lambda_schedule = aws_events.Schedule.cron(
-            hour=ph_time_midnight_utc,
+            minute='0', hour=ph_time_midnight_utc, day='*', month='*', year='*'
         )
 
         rule = aws_events.Rule(
