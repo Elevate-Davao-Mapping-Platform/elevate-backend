@@ -14,6 +14,4 @@ def handler(event, context):
     chat_controller = ChatController()
 
     chat_in = ChatPromptIn(**body)
-    response = chat_controller.process_prompt(chat_in)
-
-    return response
+    return chat_controller.process_prompt(chat_in)
