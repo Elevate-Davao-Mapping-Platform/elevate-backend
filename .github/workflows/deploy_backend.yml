@@ -70,7 +70,7 @@ jobs:
 
       - name: Deploy CDK Stack
         run: |
-          make deploy_staging
+          poetry run cdk deploy elevate-backend-stack-staging --verbose --debug --trace --progress events --outputs-file outputs.json --context stage=staging --require-approval never
 
   deploy-prod:
     if: startsWith(github.event.workflow_run.head_branch, 'release/')
@@ -104,4 +104,4 @@ jobs:
 
       - name: Deploy CDK Stack
         run: |
-          make deploy_prod
+          poetry run cdk deploy elevate-backend-stack-prod --verbose --debug --trace --progress events --outputs-file outputs.json --context stage=prod --require-approval never
