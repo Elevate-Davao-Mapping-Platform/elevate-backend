@@ -1,6 +1,7 @@
 import json
 import os
 from http import HTTPStatus
+from typing import List, Optional
 
 import boto3
 from aws_lambda_powertools import Logger
@@ -8,6 +9,8 @@ from botocore.exceptions import ClientError
 from rag_api.external.graphql_gateway import GraphQLGateway
 from rag_api.models.chat import ChatPromptIn, SendChatChunkIn
 from rag_api.usecases.knowledge_base_usecase import KnowledgeBaseUsecase
+from shared_modules.models.schema.entity import EntitySchema
+from shared_modules.repositories.entity_repository import EntityRepository
 
 
 class LLMUsecase:
@@ -15,10 +18,20 @@ class LLMUsecase:
         self.logger = Logger()
         self.graphql_gateway = GraphQLGateway()
         self.knowledge_base_usecase = KnowledgeBaseUsecase()
+        self.entity_repository = EntityRepository()
 
-    def build_prompt(self, prompt: str, chat_history_context: str, vector_retrieval_chunks: str):
+    def build_prompt(
+        self,
+        prompt: str,
+        chat_history_context: str,
+        vector_retrieval_chunks: str,
+        entities: Optional[List[EntitySchema]] = None,
+    ):
         """Build the prompt for the LLM."""
-        prompt = (
+        entity_data = (
+            '\n'.join([entity.model_dump_json() for entity in entities]) if entities else None
+        )
+        return (
             'You are a context-aware startup ecosystem assistant for Davao City. Your goal is to help startups, '
             'investors, and ecosystem enablers by providing relevant, timely, and personalized support based on '
             "the user's needs and the local startup environment.\n\n"
@@ -26,9 +39,14 @@ class LLMUsecase:
             '## Chat History:\n'
             f'{chat_history_context}\n\n'
             '## Retrieved Knowledge Base Data:\n'
-            f'{vector_retrieval_chunks}\n'
-            '(This includes information from local incubators, web-scraped directories, and structured database entries '
-            'on startups, investors, and mentors.)\n\n'
+            f'{vector_retrieval_chunks}\n'(
+                '## All Current Startup | Enabler Data:\n'
+                f'{entity_data}\n\n'
+                '(This includes information from local incubators, web-scraped directories, and structured database entries '
+                'on startups, investors, and mentors.)\n\n'
+            )
+            if entity_data
+            else ''
             '## Instructions:\n'
             '- Your responses must reflect the current startup landscape of Davao City.\n'
             '- Incorporate specific local context (e.g., known incubators, typical funding rounds, or local startup challenges).\n'
@@ -38,7 +56,6 @@ class LLMUsecase:
             '- Never hallucinate; rely only on the provided context.\n\n'
             '## Response:\n'
         )
-        return prompt
 
     def invoke_llm(self, prompt: str):
         """Invoke the LLM with the given prompt."""
@@ -92,8 +109,9 @@ class LLMUsecase:
         prompt = chat_in.query
         vector_retrieval_chunks = self.knowledge_base_usecase.get_knowledge_base_data(prompt)
 
-        # Format system prompts
-        prompt = self.build_prompt(prompt, chat_history_context, vector_retrieval_chunks)
+        _, entities, _ = self.entity_repository.get_entity_list()
+
+        prompt = self.build_prompt(prompt, chat_history_context, vector_retrieval_chunks, entities)
 
         response_text = ''
         for response_chunk in self.invoke_llm(prompt):
