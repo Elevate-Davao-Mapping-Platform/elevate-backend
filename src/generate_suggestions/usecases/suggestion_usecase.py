@@ -2,11 +2,11 @@ from http import HTTPStatus
 from typing import Union
 
 from aws_lambda_powertools import Logger
-from generate_suggestions.repositories.entity_repository import EntityRepository
 from generate_suggestions.repositories.suggestion_repository import SuggestionRepository
 from generate_suggestions.usecases.llm_usecase import LLMUsecase
 from shared_modules.models.schema.message import ErrorResponse
 from shared_modules.models.schema.suggestions import SuggestionMatchList
+from shared_modules.repositories.entity_repository import EntityRepository
 
 
 class SuggestionUsecase:
