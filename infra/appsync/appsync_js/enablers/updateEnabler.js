@@ -2,7 +2,7 @@ import { util } from '@aws-appsync/utils';
 
 export function request(ctx) {
     const tableName = ctx.env.TABLE_NAME;
-    const enablerId = ctx.args.enablerId;
+    const { enablerId } = ctx.args;
     const transactItems = [];
 
     // Metadata update
@@ -128,7 +128,7 @@ export function response(ctx) {
         };
     }
 
-    const enablerId = ctx.args.enablerId;
+    const { enablerId } = ctx.args;
 
     return {
         id: enablerId,

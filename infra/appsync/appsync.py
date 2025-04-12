@@ -33,7 +33,7 @@ class AppsyncAPI(Construct):
         self._setup_startup_resolvers(entity_table_data_source)
         self._setup_enabler_resolvers(entity_table_data_source)
         self._setup_entity_list_resolvers(entity_table_data_source)
-        self._setup_suggestion_resolvers(get_suggestions_lambda)
+        self._setup_suggestion_resolvers(get_suggestions_lambda, entity_table_data_source)
         self._setup_analytics_resolvers(get_analytics_lambda)
 
         # Store API outputs
@@ -226,17 +226,32 @@ class AppsyncAPI(Construct):
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
-    def _setup_suggestion_resolvers(self, get_suggestions_lambda: lambda_.Function) -> None:
+    def _setup_suggestion_resolvers(
+        self,
+        get_suggestions_lambda: lambda_.Function,
+        entity_table_data_source: appsync.DynamoDbDataSource,
+    ) -> None:
         """Sets up DynamoDB data source and resolvers for suggestion functionality."""
-        suggestion_data_source = self.api.add_lambda_data_source(
+        suggestion_lambda_data_source = self.api.add_lambda_data_source(
             f'{self.config.prefix}-suggestion-data-source',
             get_suggestions_lambda,
         )
 
-        suggestion_data_source.create_resolver(
+        suggestion_lambda_data_source.create_resolver(
             f'{self.config.prefix}-QueryGetSuggestionsResolver',
             type_name='Query',
             field_name='getSuggestions',
+        )
+
+        folder_root = './infra/appsync/appsync_js/suggestions'
+
+        save_suggestion_js = f'{folder_root}/saveSuggestion.js'
+        entity_table_data_source.create_resolver(
+            f'{self.config.prefix}-MutationSaveSuggestionResolver',
+            type_name='Mutation',
+            field_name='saveSuggestion',
+            code=appsync.Code.from_asset(save_suggestion_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
     def _setup_analytics_resolvers(self, analytics_lambda: lambda_.Function) -> None:

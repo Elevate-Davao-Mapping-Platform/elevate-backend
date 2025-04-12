@@ -279,6 +279,16 @@ type Analytics {
 }
 
 # ===================================
+# Suggestion related types
+# ===================================
+input SaveSuggestionInput {
+  entityType: EntityType!
+  entityId: String!
+  matchPairId: String!
+  matchPairType: EntityType!
+}
+
+# ===================================
 # Root types
 # ===================================
 type Query {
@@ -300,6 +310,7 @@ type Mutation {
   createEnabler(input: EnablerInput!): MutationResponse! @aws_api_key
   updateEnabler(input: EnablerInput!, enablerId: String!): MutationResponse!
     @aws_api_key
+  saveSuggestion(input: SaveSuggestionInput!): MutationResponse! @aws_api_key
 }
 
 type Subscription {
