@@ -134,6 +134,7 @@ class LLMRAGAPI(Construct):
                     'local_tests',
                     'generate_suggestions',
                     'get_suggestions',
+                    'get_analytics',
                 ],
             ),
         )

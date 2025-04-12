@@ -81,7 +81,13 @@ class GetSuggestions(Construct):
             role=lambda_role,
             layers=[self.common_dependencies_layer],
             bundling=BundlingOptions(
-                asset_excludes=['**/__pycache__', 'local_tests', 'generate_suggestions', 'rag_api'],
+                asset_excludes=[
+                    '**/__pycache__',
+                    'local_tests',
+                    'generate_suggestions',
+                    'rag_api',
+                    'get_analytics',
+                ],
             ),
         )
 
