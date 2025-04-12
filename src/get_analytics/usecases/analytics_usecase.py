@@ -7,8 +7,10 @@ from get_analytics.constants.analytics_constants import (
 )
 from get_analytics.models.analytics import (
     Analytics,
+    InvestorEngagementData,
     InvestorRecommendation,
     MatchConfidenceData,
+    StartupEngagementData,
     StartupMaturityData,
 )
 from shared_modules.constants.entity_constants import EntityType
@@ -33,14 +35,13 @@ class AnalyticsUsecase:
         :return Analytics: The analytics for the given entity
         """
         match_confidence = []
-        investor_engagement = []
-
-        monthly_confidence = {}
+        monthly_confidence_map = {}
 
         top_investor_recommendations_list = []
         top_investor_recommendations_confidence = []
 
-        startup_engagement = []
+        investor_engagement_map = {}
+        startup_engagement_map = {}
 
         startup_maturity_count_map = {}
 
@@ -65,19 +66,19 @@ class AnalyticsUsecase:
 
             entity: EntitySchema = entity_list[0]
 
-            # ======================
-            # Match Confidence
-            # ======================
             date_obj = datetime.fromisoformat(suggestion.createdAt.replace('Z', '+00:00'))
             month = date_obj.strftime('%m')
             year = date_obj.strftime('%Y')
 
             year_month_id = f'{year}-{month}'
 
-            if year_month_id not in monthly_confidence:
-                monthly_confidence[year_month_id] = []
+            # ======================
+            # Match Confidence
+            # ======================
+            if year_month_id not in monthly_confidence_map:
+                monthly_confidence_map[year_month_id] = []
 
-            monthly_confidence[year_month_id].append(suggestion.certainty)
+            monthly_confidence_map[year_month_id].append(suggestion.certainty)
 
             # ======================
             # Top Investor Recommendations
@@ -111,8 +112,38 @@ class AnalyticsUsecase:
                     startup_maturity_count_map.get(funding_stage, 0) + 1
                 )
 
+            # ======================
+            # Investor Engagement
+            # ======================
+            if entity_type == EntityType.STARTUP:
+                if year_month_id not in investor_engagement_map:
+                    investor_engagement_map[year_month_id] = {
+                        'responded': 0,
+                        'ignored': 0,
+                    }
+
+                if suggestion.isSaved:
+                    investor_engagement_map[year_month_id]['responded'] += 1
+                else:
+                    investor_engagement_map[year_month_id]['ignored'] += 1
+
+            # ======================
+            # Startup Engagement
+            # ======================
+            if entity_type == EntityType.ENABLER and suggestion.matchPairType == EntityType.STARTUP:
+                if year_month_id not in startup_engagement_map:
+                    startup_engagement_map[year_month_id] = {
+                        'responded': 0,
+                        'ignored': 0,
+                    }
+
+                if suggestion.isSaved:
+                    startup_engagement_map[year_month_id]['responded'] += 1
+                else:
+                    startup_engagement_map[year_month_id]['ignored'] += 1
+
         # Calculate average confidence for each month
-        for year_month_id, confidences in monthly_confidence.items():
+        for year_month_id, confidences in monthly_confidence_map.items():
             avg_confidence = sum(confidences) * 100 / len(confidences)
             year, month = year_month_id.split('-')
             match_confidence.append(
@@ -131,6 +162,30 @@ class AnalyticsUsecase:
             StartupMaturityData(stage=funding_stage, count=count)
             for funding_stage, count in startup_maturity_count_map.items()
         ]
+
+        investor_engagement = []
+        for year_month_id, engagement_data in investor_engagement_map.items():
+            year, month = year_month_id.split('-')
+            investor_engagement.append(
+                InvestorEngagementData(
+                    year=year,
+                    month=month,
+                    responded=engagement_data['responded'],
+                    ignored=engagement_data['ignored'],
+                )
+            )
+
+        startup_engagement = []
+        for year_month_id, engagement_data in startup_engagement_map.items():
+            year, month = year_month_id.split('-')
+            startup_engagement.append(
+                StartupEngagementData(
+                    year=year,
+                    month=month,
+                    responded=engagement_data['responded'],
+                    ignored=engagement_data['ignored'],
+                )
+            )
 
         return Analytics(
             matchConfidence=match_confidence,
