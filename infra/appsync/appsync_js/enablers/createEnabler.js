@@ -101,7 +101,7 @@ export function response(ctx) {
     }
 
     // Extract enablerId from the hashKey of the first item
-    const enablerId = ctx.result.data[tableName][0].enablerId;
+    const { enablerId } = ctx.result.data[tableName][0];
 
     return {
         id: enablerId,

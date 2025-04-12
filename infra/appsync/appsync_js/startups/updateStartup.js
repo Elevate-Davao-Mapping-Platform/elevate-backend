@@ -4,7 +4,7 @@ export function request(ctx) {
     const tableName = ctx.env.TABLE_NAME;
 
     const transactItems = [];
-    const startupId = ctx.args.startupId;
+    const { startupId } = ctx.args;
 
     const updateExpression = [];
     const expressionValues = {};
@@ -123,7 +123,7 @@ export function response(ctx) {
         };
     }
 
-    const startupId = ctx.args.startupId;
+    const { startupId } = ctx.args;
 
     return {
         id: startupId,

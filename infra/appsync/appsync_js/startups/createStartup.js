@@ -89,7 +89,7 @@ export function response(ctx) {
     }
 
     // Extract startupId from the hashKey of the first item
-    const startupId = ctx.result.data[tableName][0].startupId;
+    const { startupId } = ctx.result.data[tableName][0];
 
     return {
         id: startupId,

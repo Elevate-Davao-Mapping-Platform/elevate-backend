@@ -28,12 +28,12 @@ export function response(ctx) {
         util.error(ctx.error.message, ctx.error.type);
     }
 
-    const items = ctx.result.items;
+    const { items } = ctx.result;
     if (items.length === 0) {
         util.error("Enabler not found", "NotFound");
     }
 
-    const enablerId = ctx.arguments.enablerId;
+    const { enablerId } = ctx.arguments;
 
     // Initialize the enabler object
     const enabler = {

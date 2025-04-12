@@ -6,7 +6,7 @@ import { util } from "@aws-appsync/utils";
  * @returns {import('@aws-appsync/utils').DynamoDBQueryRequest} the request
  */
 export function request(ctx) {
-    const entityType = ctx.arguments.entityType;
+    const { entityType } = ctx.arguments;
 
     return {
         operation: "Scan",
@@ -32,7 +32,7 @@ export function response(ctx) {
         util.error(ctx.error.message, ctx.error.type);
     }
 
-    const items = ctx.result.items;
+    const { items } = ctx.result;
     const entities = [];
     let currentEntity = null;
     let currentEntityId = null;
