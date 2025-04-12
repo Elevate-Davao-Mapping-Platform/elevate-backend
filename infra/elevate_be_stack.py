@@ -6,9 +6,11 @@ from infra.cognito.identity_pool import IdentityPoolConstruct
 from infra.cognito.user_pool import UserPoolConstruct
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
+from infra.functions.get_analytics import GetAnalytics
 from infra.functions.get_suggestions import GetSuggestions
 from infra.functions.rag_api import LLMRAGAPI
 from infra.functions.suggestions_cron import SuggestionsCron
+from infra.layers.layers import CommonDependenciesLayer
 from infra.s3.general_bucket import GeneralBucketConstruct
 
 
@@ -42,13 +44,22 @@ class ElevateBeStack(Stack):
         cognito_user_pool = cognito_construct.user_pool
         cognito_user_pool_client = cognito_construct.user_pool_client
 
-        # LLM RAG Lambda
         entity_table = EntityTable(self, 'EntityTable', config=self.config)
+
+        # LLM RAG Lambda
+        common_dependencies_layer = CommonDependenciesLayer(
+            self,
+            'CommonDependenciesLayer',
+            config=self.config,
+        )
+        common_dependencies_layer = common_dependencies_layer.get_layer()
+
         llm_rag_api = LLMRAGAPI(
             self,
             'LLMRAGAPI',
             config=self.config,
             entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
         )
 
         # Get Suggestions Lambda
@@ -57,6 +68,16 @@ class ElevateBeStack(Stack):
             'GetSuggestions',
             config=self.config,
             entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
+        )
+
+        # Get Analytics Lambda
+        get_analytics = GetAnalytics(
+            self,
+            'GetAnalytics',
+            config=self.config,
+            entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
         )
 
         # Appsync API
@@ -68,6 +89,7 @@ class ElevateBeStack(Stack):
             llm_rag_api=llm_rag_api,
             entity_table=entity_table.entity_table,
             get_suggestions_lambda=get_suggestions.get_suggestions_lambda,
+            get_analytics_lambda=get_analytics.get_analytics_lambda,
         )
 
         llm_rag_api.set_appsync_api(api)
@@ -78,6 +100,7 @@ class ElevateBeStack(Stack):
             'SuggestionsCron',
             config=self.config,
             entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
         )
 
         # Create S3 bucket using the new construct
