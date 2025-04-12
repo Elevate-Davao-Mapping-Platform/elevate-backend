@@ -25,6 +25,9 @@ class SuggestionsCron(Construct):
     """
 
     def __init__(self, scope: Construct, id: str, config: Config, **kwargs) -> None:
+        self.common_dependencies_layer: PythonLayerVersion = kwargs.pop(
+            'common_dependencies_layer', None
+        )
         self.entity_table: EntityTable = kwargs.pop('entity_table', None)
 
         super().__init__(scope, id, **kwargs)
@@ -124,9 +127,9 @@ class SuggestionsCron(Construct):
                 'POWERTOOLS_LOGGER_LOG_EVENT': 'true' if self.config.stage == 'dev' else 'false',
             },
             role=lambda_role,
-            layers=[self.suggestions_cron_layer],
+            layers=[self.common_dependencies_layer, self.suggestions_cron_layer],
             bundling=BundlingOptions(
-                asset_excludes=['**/__pycache__', 'local_tests', 'get_suggestions', 'rag_api'],
+                asset_excludes=['**/__pycache__', 'local_tests', 'generate_suggestions', 'rag_api'],
             ),
         )
 

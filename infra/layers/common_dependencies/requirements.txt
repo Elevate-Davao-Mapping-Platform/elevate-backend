@@ -4,21 +4,21 @@ annotated-types==0.7.0 ; python_version >= "3.12" and python_version < "3.13" \
 aws-lambda-powertools==2.43.1 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:48116250c1771c7b8d4977ad2d475271074d86964107ccfd3fc6775e51984d88 \
     --hash=sha256:5c371a0c0430cf7bca1696748cb0d85079aac2c51056cbee10e5435029b35ca4
-boto3-stubs[bedrock-agent-runtime]==1.37.19 ; python_version >= "3.12" and python_version < "3.13" \
-    --hash=sha256:95c665b1375b6578067fdc3a7854b58eca710b288240bd1cd2c9b1954e3f5f5d \
-    --hash=sha256:af67bca13956004eaab81a7af179c689392fd8341f761a27d5b49cd17639a472
-botocore-stubs==1.37.19 ; python_version >= "3.12" and python_version < "3.13" \
-    --hash=sha256:c33db42760989cd3c3bfc57dc676445c0b644bfb60d2c0ef409ab7e051445f63 \
-    --hash=sha256:d8fcf941d10ff9af71cf7a4bda4b2e4f458d780f7c691f93811a130d636963f1
+boto3-stubs[bedrock-agent-runtime]==1.37.25 ; python_version >= "3.12" and python_version < "3.13" \
+    --hash=sha256:268cd34076f68d9e991f9e4a159d4d1696ae52d7d56f5f7beb92f9874eca0e34 \
+    --hash=sha256:6319e9106d9bd519a6a8878a814b317f54cae023c2e176c31f502d0034824d1f
+botocore-stubs==1.37.25 ; python_version >= "3.12" and python_version < "3.13" \
+    --hash=sha256:6e145c836f28fd02fa4f05845789226cf2657a9235b8fa269b1ad21744f5bdce \
+    --hash=sha256:ff3a9419764515c64cc6acc9f5dbf01af773c081bcb7606cb53cfe629452dc2b
 botocore==1.35.99 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:1eab44e969c39c5f3d9a3104a0836c24715579a455f12b3979a31d7cde51b3c3 \
     --hash=sha256:b22d27b6b617fc2d7342090d6129000af2efd20174215948c0d7ae2da0fab445
 jmespath==1.0.1 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980 \
     --hash=sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe
-mypy-boto3-bedrock-agent-runtime==1.37.10 ; python_version >= "3.12" and python_version < "3.13" \
-    --hash=sha256:370b9329547f41a3ac312f08073c66a6ae91ac18d92865c56149f1f47d387487 \
-    --hash=sha256:704bcdf450fd8934905d5bc2004380a34856e24d92dcaa2311bc225a7faed037
+mypy-boto3-bedrock-agent-runtime==1.37.22 ; python_version >= "3.12" and python_version < "3.13" \
+    --hash=sha256:402d424a9080ea3b8f6d353b9b50110a80758a44d8fa8c9b91d065459676a886 \
+    --hash=sha256:5b70873103fd14862dca9cd8b38075bedbe7747c171ecfe3ea99830b9d9e4d91
 pydantic-core==2.27.2 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:00bad2484fa6bda1e216e7345a798bd37c68fb2d97558edd584942aa41b7d278 \
     --hash=sha256:0296abcb83a797db256b773f45773da397da75a08f5fcaef41f2044adec05f50 \
@@ -141,9 +141,9 @@ types-awscrt==0.24.2 ; python_version >= "3.12" and python_version < "3.13" \
 types-s3transfer==0.11.4 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:05fde593c84270f19fd053f0b1e08f5a057d7c5f036b9884e68fb8cd3041ac30 \
     --hash=sha256:2a76d92c07d4a3cb469e5343b2e7560e0b8078b2e03696a65407b8c44c861b61
-typing-extensions==4.12.2 ; python_version >= "3.12" and python_version < "3.13" \
-    --hash=sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d \
-    --hash=sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8
+typing-extensions==4.13.0 ; python_version >= "3.12" and python_version < "3.13" \
+    --hash=sha256:0a4ac55a5820789d87e297727d229866c9650f6521b64206413c4fbada24d95b \
+    --hash=sha256:c8dd92cc0d6425a97c18fbb9d1954e5ff92c1ca881a309c45f06ebc0b79058e5
 urllib3==2.3.0 ; python_version >= "3.12" and python_version < "3.13" \
     --hash=sha256:1cee9ad369867bfdbbb48b7dd50374c0967a0bb7710050facf0dd6911440e3df \
     --hash=sha256:f8c5449b3cf0861679ce7e0503c7b44b5ec981bec0d1d3795a07f1ba96f0204d

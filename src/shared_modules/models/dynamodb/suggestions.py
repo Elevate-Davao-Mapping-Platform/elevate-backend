@@ -17,3 +17,4 @@ class Suggestions(Entities, discriminator='Suggestion'):
     rationale = UnicodeAttribute(null=False)
     matchPairId = UnicodeAttribute(null=False)
     matchPairType = UnicodeAttribute(null=False)
+    matchPairName = UnicodeAttribute(null=False)

@@ -1,10 +1,10 @@
 from http import HTTPStatus
 from typing import List
 
-from get_suggestions.repositories.entity_repository import EntityRepository
-from get_suggestions.repositories.suggestion_repository import SuggestionRepository
 from shared_modules.constants.entity_constants import EntityType
 from shared_modules.models.schema.entity import EntitySchema
+from shared_modules.repositories.entity_repository import EntityRepository
+from shared_modules.repositories.suggestion_repository import SuggestionRepository
 
 
 class SuggestionsUsecase:
@@ -50,8 +50,8 @@ class SuggestionsUsecase:
                 if field in query_selection_set:
                     suggestion_item_keys.append((suggestion.matchPairId, key_suffix))
 
-        status, entities, _ = self.entity_repository.batch_get_entities_with_suggestions(
-            suggestion_item_keys
+        status, entities, _ = self.entity_repository.batch_get_entities(
+            item_keys=suggestion_item_keys
         )
         if status != HTTPStatus.OK:
             return []
