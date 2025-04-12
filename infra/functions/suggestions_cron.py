@@ -129,7 +129,13 @@ class SuggestionsCron(Construct):
             role=lambda_role,
             layers=[self.common_dependencies_layer, self.suggestions_cron_layer],
             bundling=BundlingOptions(
-                asset_excludes=['**/__pycache__', 'local_tests', 'generate_suggestions', 'rag_api'],
+                asset_excludes=[
+                    '**/__pycache__',
+                    'local_tests',
+                    'rag_api',
+                    'get_suggestions',
+                    'get_analytics',
+                ],
             ),
         )
 
