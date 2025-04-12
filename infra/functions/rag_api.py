@@ -23,6 +23,9 @@ class LLMRAGAPI(Construct):
         config: Config,
         **kwargs,
     ) -> None:
+        self.common_dependencies_layer: PythonLayerVersion = kwargs.pop(
+            'common_dependencies_layer', None
+        )
         self.entity_table: EntityTable = kwargs.pop('entity_table', None)
         self.appsync_api = kwargs.pop('appsync_api', None)
 
@@ -124,7 +127,7 @@ class LLMRAGAPI(Construct):
                 'POWERTOOLS_LOGGER_LOG_EVENT': 'true' if self.config.stage == 'dev' else 'false',
             },
             role=lambda_role,
-            layers=[self.rag_api_layer],
+            layers=[self.rag_api_layer, self.common_dependencies_layer],
             bundling=BundlingOptions(
                 asset_excludes=[
                     '**/__pycache__',

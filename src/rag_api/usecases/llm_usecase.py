@@ -31,7 +31,7 @@ class LLMUsecase:
         entity_data = (
             '\n'.join([entity.model_dump_json() for entity in entities]) if entities else None
         )
-        return (
+        base_prompt = (
             'You are a context-aware startup ecosystem assistant for Davao City. Your goal is to help startups, '
             'investors, and ecosystem enablers by providing relevant, timely, and personalized support based on '
             "the user's needs and the local startup environment.\n\n"
@@ -39,7 +39,11 @@ class LLMUsecase:
             '## Chat History:\n'
             f'{chat_history_context}\n\n'
             '## Retrieved Knowledge Base Data:\n'
-            f'{vector_retrieval_chunks}\n'(
+            f'{vector_retrieval_chunks}\n'
+        )
+
+        entity_section = (
+            (
                 '## All Current Startup | Enabler Data:\n'
                 f'{entity_data}\n\n'
                 '(This includes information from local incubators, web-scraped directories, and structured database entries '
@@ -47,6 +51,9 @@ class LLMUsecase:
             )
             if entity_data
             else ''
+        )
+
+        instructions = (
             '## Instructions:\n'
             '- Your responses must reflect the current startup landscape of Davao City.\n'
             '- Incorporate specific local context (e.g., known incubators, typical funding rounds, or local startup challenges).\n'
@@ -56,6 +63,8 @@ class LLMUsecase:
             '- Never hallucinate; rely only on the provided context.\n\n'
             '## Response:\n'
         )
+
+        return base_prompt + entity_section + instructions
 
     def invoke_llm(self, prompt: str):
         """Invoke the LLM with the given prompt."""
