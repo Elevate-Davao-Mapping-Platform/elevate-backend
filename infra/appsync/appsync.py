@@ -19,6 +19,7 @@ class AppsyncAPI(Construct):
         llm_rag_api = kwargs.pop('llm_rag_api', None)
         entity_table: dynamodb.Table = kwargs.pop('entity_table', None)
         get_suggestions_lambda: lambda_.Function = kwargs.pop('get_suggestions_lambda', None)
+        get_analytics_lambda: lambda_.Function = kwargs.pop('get_analytics_lambda', None)
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -33,6 +34,7 @@ class AppsyncAPI(Construct):
         self._setup_enabler_resolvers(entity_table_data_source)
         self._setup_entity_list_resolvers(entity_table_data_source)
         self._setup_suggestion_resolvers(get_suggestions_lambda)
+        self._setup_analytics_resolvers(get_analytics_lambda)
 
         # Store API outputs
         self.graphql_url = self.api.graphql_url
@@ -235,4 +237,17 @@ class AppsyncAPI(Construct):
             f'{self.config.prefix}-QueryGetSuggestionsResolver',
             type_name='Query',
             field_name='getSuggestions',
+        )
+
+    def _setup_analytics_resolvers(self, analytics_lambda: lambda_.Function) -> None:
+        """Sets up DynamoDB data source and resolvers for analytics functionality."""
+        analytics_data_source = self.api.add_lambda_data_source(
+            f'{self.config.prefix}-analytics-data-source',
+            analytics_lambda,
+        )
+
+        analytics_data_source.create_resolver(
+            f'{self.config.prefix}-QueryGetAnalyticsResolver',
+            type_name='Query',
+            field_name='getAnalytics',
         )
