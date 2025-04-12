@@ -166,24 +166,38 @@ class AnalyticsUsecase:
         investor_engagement = []
         for year_month_id, engagement_data in investor_engagement_map.items():
             year, month = year_month_id.split('-')
+            responded = engagement_data['responded']
+            ignored = engagement_data['ignored']
+            total = responded + ignored
+
+            responded_rate = responded * 100 / total if total > 0 else 0
+            ignored_rate = ignored * 100 / total if total > 0 else 0
+
             investor_engagement.append(
                 InvestorEngagementData(
                     year=year,
                     month=month,
-                    responded=engagement_data['responded'],
-                    ignored=engagement_data['ignored'],
+                    responded=responded_rate,
+                    ignored=ignored_rate,
                 )
             )
 
         startup_engagement = []
         for year_month_id, engagement_data in startup_engagement_map.items():
             year, month = year_month_id.split('-')
+            responded = engagement_data['responded']
+            ignored = engagement_data['ignored']
+            total = responded + ignored
+
+            responded_rate = responded * 100 / total if total > 0 else 0
+            ignored_rate = ignored * 100 / total if total > 0 else 0
+
             startup_engagement.append(
                 StartupEngagementData(
                     year=year,
                     month=month,
-                    responded=engagement_data['responded'],
-                    ignored=engagement_data['ignored'],
+                    responded=responded_rate,
+                    ignored=ignored_rate,
                 )
             )
 
