@@ -1,4 +1,4 @@
-from aws_cdk import CfnOutput, Duration, RemovalPolicy, aws_iam, aws_lambda, aws_logs
+from aws_cdk import CfnOutput, Duration, aws_iam, aws_lambda, aws_logs
 from aws_cdk.aws_lambda_python_alpha import (
     BundlingOptions,
     PythonFunction,
@@ -16,6 +16,9 @@ class GetSuggestions(Construct):
     """
 
     def __init__(self, scope: Construct, id: str, config: Config, **kwargs) -> None:
+        self.common_dependencies_layer: PythonLayerVersion = kwargs.pop(
+            'common_dependencies_layer', None
+        )
         self.entity_table: EntityTable = kwargs.pop('entity_table', None)
 
         super().__init__(scope, id, **kwargs)
@@ -55,22 +58,6 @@ class GetSuggestions(Construct):
             )
         )
 
-        self.get_suggestions_layer = PythonLayerVersion(
-            self,
-            f'{self.config.prefix}-get-suggestions-layer',
-            layer_version_name=f'{self.config.prefix}-get-suggestions-layer',
-            entry='src/get_suggestions/layer',
-            compatible_runtimes=[aws_lambda.Runtime.PYTHON_3_12],
-            compatible_architectures=[aws_lambda.Architecture.X86_64],
-            description='Dependencies for Get Suggestions Lambda',
-            removal_policy=RemovalPolicy.DESTROY,
-            bundling=BundlingOptions(
-                asset_excludes=[
-                    '**/__pycache__',
-                ],
-            ),
-        )
-
         self.get_suggestions_lambda = PythonFunction(
             self,
             f'{self.config.prefix}-get-suggestions',
@@ -92,7 +79,7 @@ class GetSuggestions(Construct):
                 'POWERTOOLS_LOGGER_LOG_EVENT': 'true' if self.config.stage == 'dev' else 'false',
             },
             role=lambda_role,
-            layers=[self.get_suggestions_layer],
+            layers=[self.common_dependencies_layer],
             bundling=BundlingOptions(
                 asset_excludes=['**/__pycache__', 'local_tests', 'generate_suggestions', 'rag_api'],
             ),
