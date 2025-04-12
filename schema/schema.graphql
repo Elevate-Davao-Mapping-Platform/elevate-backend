@@ -1,4 +1,6 @@
+# ===================================
 # Common input types
+# ===================================
 input LatLngInput {
   lat: Float!
   lng: Float!
@@ -14,7 +16,9 @@ input ContactInput {
   value: String!
 }
 
+# ===================================
 # Common object types
+# ===================================
 type LatLng {
   lat: Float!
   lng: Float!
@@ -30,7 +34,9 @@ type Contact {
   value: String!
 }
 
+# ===================================
 # Chat related types
+# ===================================
 type Chat {
   entryId: String!
   message: String!
@@ -66,7 +72,9 @@ input ChatIn {
   chatTopicId: String
 }
 
+# ===================================
 # Startup related types
+# ===================================
 type Milestone {
   title: String!
   dateAchieved: String!
@@ -131,6 +139,9 @@ input StartupInput {
   founders: [FounderInput!]!
 }
 
+# ===================================
+# Enabler related types
+# ===================================
 type InvestmentCriteria {
   criteriaName: String!
   details: String
@@ -195,10 +206,20 @@ input EnablerInput {
   portfolio: [PortfolioItemInput!]!
 }
 
+# ===================================
+# Entity related types
+# ===================================
+
 enum EntityType {
   STARTUP
   ENABLER
 }
+
+union Entity = Startup | Enabler
+
+# ===================================
+# Mutation related types
+# ===================================
 
 type MutationResponse {
   id: String
@@ -213,9 +234,53 @@ type SendChatResponse {
   chatTopicId: String
 }
 
-union Entity = Startup | Enabler
+# ===================================
+# Analytics related types
+# ===================================
 
+type InvestorEngagementData {
+  month: String!
+  year: String!
+  responded: Float!
+  ignored: Float!
+}
+
+type MatchConfidenceData {
+  month: String!
+  year: String!
+  confidence: Float!
+  threshold: Float!
+}
+
+type StartupEngagementData {
+  month: String!
+  year: String!
+  responded: Float!
+  ignored: Float!
+}
+
+type StartupMaturityData {
+  stage: String!
+  count: Int!
+}
+
+type InvestorRecommendation {
+  name: String
+  confidence: String!
+  score: Float!
+}
+
+type Analytics {
+  matchConfidence: [MatchConfidenceData!]!
+  investorEngagement: [InvestorEngagementData]
+  startupEngagement: [StartupEngagementData]
+  startupMaturity: [StartupMaturityData]
+  topInvestorRecommendations: [InvestorRecommendation]
+}
+
+# ===================================
 # Root types
+# ===================================
 type Query {
   getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
   getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
@@ -223,6 +288,7 @@ type Query {
   getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
   getMapList(entityType: EntityType): [Entity!] @aws_api_key
   getSuggestions(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
+  getAnalytics(entityType: EntityType!, entityId: String!): Analytics! @aws_api_key
 }
 
 type Mutation {
