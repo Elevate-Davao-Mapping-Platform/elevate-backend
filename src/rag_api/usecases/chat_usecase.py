@@ -96,10 +96,9 @@ class ChatUsecase:
                 status=status,
             )
 
-        chat_data = ChatOut(
+        return ChatOut(
             response=llm_response,
             chatTopicId=chat_topic_id,
             userId=chat_prompt_in.userId,
             entryId=user_prompt_chat.entryId,
         )
-        return chat_data

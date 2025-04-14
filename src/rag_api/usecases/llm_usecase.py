@@ -25,11 +25,14 @@ class LLMUsecase:
         prompt: str,
         chat_history_context: str,
         vector_retrieval_chunks: str,
-        entities: Optional[List[EntitySchema]] = None,
+        user_entity: Optional[EntitySchema] = None,
+        other_entities: Optional[List[EntitySchema]] = None,
     ):
         """Build the prompt for the LLM."""
         entity_data = (
-            '\n'.join([entity.model_dump_json() for entity in entities]) if entities else None
+            '\n'.join([entity.model_dump_json() for entity in other_entities])
+            if other_entities
+            else None
         )
         base_prompt = (
             'You are a context-aware startup ecosystem assistant for Davao City. Your goal is to help startups, '
@@ -42,9 +45,14 @@ class LLMUsecase:
             f'{vector_retrieval_chunks}\n'
         )
 
-        entity_section = (
+        current_entity_section = (
+            ('## Current User Data:\n' f'{user_entity.model_dump_json()}\n\n')
+            if user_entity
+            else ''
+        )
+
+        other_entities_section = (
             (
-                '## All Current Startup | Enabler Data:\n'
                 f'{entity_data}\n\n'
                 '(This includes information from local incubators, web-scraped directories, and structured database entries '
                 'on startups, investors, and mentors.)\n\n'
@@ -64,7 +72,7 @@ class LLMUsecase:
             '## Response:\n'
         )
 
-        return base_prompt + entity_section + instructions
+        return base_prompt + current_entity_section + other_entities_section + instructions
 
     def invoke_llm(self, prompt: str):
         """Invoke the LLM with the given prompt."""
@@ -116,11 +124,21 @@ class LLMUsecase:
         """
         # Configuration
         prompt = chat_in.query
+        user_id = chat_in.userId
         vector_retrieval_chunks = self.knowledge_base_usecase.get_knowledge_base_data(prompt)
 
         _, entities, _ = self.entity_repository.get_entity_list()
+        user_entity = None
+        other_entities = []
+        for entity in entities:
+            if entity.startupId == user_id or entity.enablerId == user_id:
+                user_entity = entity
+            else:
+                other_entities.append(entity)
 
-        prompt = self.build_prompt(prompt, chat_history_context, vector_retrieval_chunks, entities)
+        prompt = self.build_prompt(
+            prompt, chat_history_context, vector_retrieval_chunks, user_entity, other_entities
+        )
 
         response_text = ''
         for response_chunk in self.invoke_llm(prompt):
