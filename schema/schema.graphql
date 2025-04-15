@@ -300,7 +300,11 @@ type Query {
   getEnablerProfile(enablerId: String!): Enabler! @aws_api_key
   getMapList(entityType: EntityType): [Entity!] @aws_api_key
   getSuggestions(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
+<<<<<<< HEAD
   getAnalytics(entityType: EntityType!, entityId: String!): Analytics! @aws_api_key
+=======
+  getMapListAdmin: MapListAdminResponse! @aws_cognito_user_pools(cognito_groups: ["admin"])
+>>>>>>> d2eb183 (KAN-60 changes)
 }
 
 type Mutation {
@@ -318,4 +322,40 @@ type Mutation {
 type Subscription {
   onChatResponse(chatTopicId: String, userId: String): ChatOut
     @aws_subscribe(mutations: ["sendChatChunk"])
+}
+
+type NameChangeRequestStatus {
+  isApproved: Boolean
+}
+
+type MapListEntity {
+  id: ID!
+  role: String
+  name: String
+  logoObjectKey: String
+  dateFounded: String
+  industries: [String]
+  description: String
+  location: Location
+  nameChangeRequestStatus: NameChangeRequestStatus
+  visibility: Boolean
+}
+
+type NameChangeRequest {
+  requestId: String!
+  requestType: String!
+  entityId: String!
+  entityType: EntityType!
+  originalName: String!
+  newName: String!
+  isApproved: Boolean!
+  updatedAt: String!
+}
+
+type MapListAdminResponse {
+  mapList: [MapListEntity!]!
+  requestList: [NameChangeRequest!]!
+  startupLength: Int!
+  enablersLength: Int!
+  pendingRequestsLen: Int!
 }
