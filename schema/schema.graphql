@@ -122,6 +122,7 @@ type Startup {
   milestones: [Milestone!]!
   founders: [Founder!]!
   createdAt: String
+  isSaved: Boolean
 }
 
 input StartupInput {
@@ -185,6 +186,7 @@ type Enabler {
   investmentCriteria: [InvestmentCriteria!]!
   portfolio: [PortfolioItem!]!
   createdAt: String
+  isSaved: Boolean
 }
 
 input EnablerInput {

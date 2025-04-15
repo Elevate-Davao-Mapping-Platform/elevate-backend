@@ -39,16 +39,24 @@ class SuggestionsUsecase:
         if status != HTTPStatus.OK:
             return []
 
+        is_saved_map = {}
+
         suggestion_item_keys = []
         for suggestion in suggestions:
             suggestion_item_keys.append(
                 (suggestion.matchPairId, f'{suggestion.matchPairType}#METADATA')
             )
+
+            match_entity_id = suggestion.matchPairId.split('#')[1]
+            is_saved_map[match_entity_id] = suggestion.isSaved or False
+
             # Add requested fields based on entity type
             entity_fields = self.entity_field_map.get(suggestion.matchPairType, {})
-            for field, key_suffix in entity_fields.items():
-                if field in query_selection_set:
-                    suggestion_item_keys.append((suggestion.matchPairId, key_suffix))
+            suggestion_item_keys.extend(
+                (suggestion.matchPairId, key_suffix)
+                for field, key_suffix in entity_fields.items()
+                if field in query_selection_set
+            )
 
         status, entities, _ = self.entity_repository.batch_get_entities(
             item_keys=suggestion_item_keys
@@ -56,9 +64,15 @@ class SuggestionsUsecase:
         if status != HTTPStatus.OK:
             return []
 
-        entity_data = [
-            {**entity.model_dump(), '__typename': 'Startup' if entity.startupId else 'Enabler'}
+        entity_data_list: List[dict] = [
+            {
+                '__typename': 'Startup' if entity.startupId else 'Enabler',
+                'isSaved': is_saved_map[entity.startupId]
+                if entity.startupId
+                else is_saved_map[entity.enablerId],
+                **entity.model_dump(),
+            }
             for entity in entities
         ]
 
-        return entity_data
+        return entity_data_list
