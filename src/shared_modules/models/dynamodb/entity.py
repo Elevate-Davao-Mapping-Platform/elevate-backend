@@ -84,6 +84,10 @@ class Entity(Model):
     updatedAt = UnicodeAttribute(null=True)
     contacts = ListAttribute(of=Contact, null=True)
 
+    # Add new optional attributes
+    role = UnicodeAttribute(null=True)
+    visibility = NumberAttribute(null=True)  # Boolean stored as 0/1
+
     # Startup-specific attributes
     startUpName = UnicodeAttribute(null=True)
     startupStage = UnicodeAttribute(null=True)
