@@ -106,6 +106,7 @@ class EntitySchema(BaseModel):
     email: Optional[str] = Field(
         None, description='Email address - for communication and verification purposes'
     )
+    logoObjectKey: Optional[str] = Field(None, description='Logo object key - for the entity logo')
 
     # ENABLER attributes
     enablerId: Optional[str] = Field(
