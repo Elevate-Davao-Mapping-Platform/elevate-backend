@@ -35,20 +35,18 @@ class SuggestionsUsecase:
 
         :return Union[List[EntitySchema], ErrorResponse]: A list of entity profiles and/or an error response
         """
-        status, suggestions, _ = self.suggestion_repository.get_suggestions(entity_type, entity_id)
+        status, suggestions, saved_profiles, _ = self.suggestion_repository.get_suggestions(
+            entity_type, entity_id
+        )
         if status != HTTPStatus.OK:
             return []
 
-        is_saved_map = {}
-
+        saved_profile_ids = [saved_profile.savedProfileId for saved_profile in saved_profiles]
         suggestion_item_keys = []
         for suggestion in suggestions:
             suggestion_item_keys.append(
                 (suggestion.matchPairId, f'{suggestion.matchPairType}#METADATA')
             )
-
-            match_entity_id = suggestion.matchPairId.split('#')[1]
-            is_saved_map[match_entity_id] = suggestion.isSaved or False
 
             # Add requested fields based on entity type
             entity_fields = self.entity_field_map.get(suggestion.matchPairType, {})
@@ -67,9 +65,9 @@ class SuggestionsUsecase:
         entity_data_list: List[dict] = [
             {
                 '__typename': 'Startup' if entity.startupId else 'Enabler',
-                'isSaved': is_saved_map[entity.startupId]
+                'isSaved': (entity.startupId in saved_profile_ids)
                 if entity.startupId
-                else is_saved_map[entity.enablerId],
+                else (entity.enablerId in saved_profile_ids),
                 **entity.model_dump(),
             }
             for entity in entities

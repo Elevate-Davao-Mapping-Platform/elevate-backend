@@ -45,7 +45,7 @@ export function response(ctx) {
     }
 
     return {
-        id: ctx.args.input.entityId,
+        id: ctx.result.startupId || ctx.result.enablerId,
         message: `Profile saved successfully`,
         success: true
     };
