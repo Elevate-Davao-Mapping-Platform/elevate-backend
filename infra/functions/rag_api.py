@@ -9,6 +9,7 @@ from constructs import Construct
 from infra.appsync.appsync import AppsyncAPI
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
+from infra.functions.lambda_utils import LambdaUtils
 
 
 class LLMRAGAPI(Construct):
@@ -129,13 +130,7 @@ class LLMRAGAPI(Construct):
             role=lambda_role,
             layers=[self.rag_api_layer, self.common_dependencies_layer],
             bundling=BundlingOptions(
-                asset_excludes=[
-                    '**/__pycache__',
-                    'local_tests',
-                    'generate_suggestions',
-                    'get_suggestions',
-                    'get_analytics',
-                ],
+                asset_excludes=LambdaUtils.get_asset_excludes(['rag_api', 'shared_modules']),
             ),
         )
 

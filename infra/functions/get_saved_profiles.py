@@ -11,7 +11,7 @@ from infra.dynamodb.entity_table import EntityTable
 from infra.functions.lambda_utils import LambdaUtils
 
 
-class GetAnalytics(Construct):
+class GetSavedProfiles(Construct):
     """
     Class to create the infrastructure on AWS.
     """
@@ -31,7 +31,7 @@ class GetAnalytics(Construct):
 
     def create_lambda_function(self):
         """
-        Create the Lambda Function for the Analytics Cron Job
+        Create the Lambda Function for the Saved Profiles
         and create necessary IAM roles and permissions.
         """
         # Define the IAM role
@@ -59,14 +59,14 @@ class GetAnalytics(Construct):
             )
         )
 
-        self.get_analytics_lambda = PythonFunction(
+        self.get_saved_profiles_lambda = PythonFunction(
             self,
-            f'{self.config.prefix}-get-analytics',
-            function_name=f'{self.config.prefix}-get-analytics',
+            f'{self.config.prefix}-get-saved-profiles',
+            function_name=f'{self.config.prefix}-get-saved-profiles',
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             handler='handler',
             entry='src',
-            index='get_analytics/handler.py',
+            index='get_saved_profiles/handler.py',
             timeout=Duration.minutes(2),
             log_retention=aws_logs.RetentionDays.ONE_MONTH,
             memory_size=512,
@@ -76,13 +76,15 @@ class GetAnalytics(Construct):
                 'REGION': self.config.region,
                 'ENTITIES_TABLE': self.entity_table.table_name,
                 'POWERTOOLS_LOG_LEVEL': 'DEBUG' if self.config.stage == 'dev' else 'INFO',
-                'POWERTOOLS_SERVICE_NAME': f'{self.config.prefix}-get-analytics-service',
+                'POWERTOOLS_SERVICE_NAME': f'{self.config.prefix}-get-saved-profiles-service',
                 'POWERTOOLS_LOGGER_LOG_EVENT': 'true' if self.config.stage == 'dev' else 'false',
             },
             role=lambda_role,
             layers=[self.common_dependencies_layer],
             bundling=BundlingOptions(
-                asset_excludes=LambdaUtils.get_asset_excludes(['get_analytics', 'shared_modules']),
+                asset_excludes=LambdaUtils.get_asset_excludes(
+                    ['get_saved_profiles', 'shared_modules']
+                ),
             ),
         )
 
@@ -93,6 +95,6 @@ class GetAnalytics(Construct):
         CfnOutput(
             self,
             'FunctionArn',
-            value=self.get_analytics_lambda.function_arn,
+            value=self.get_saved_profiles_lambda.function_arn,
             description='Function ARN',
         )
