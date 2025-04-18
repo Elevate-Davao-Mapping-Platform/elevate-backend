@@ -44,16 +44,13 @@ class SavedProfilesUsecase:
             self.logger.error(f'Failed to get saved profiles: {status}')
             return []
 
-        is_saved_map = {}
-
         profile_item_keys = []
         for profile in saved_profiles:
-            entity_id = profile.enablerId or profile.startupId
-            hash_key = f'{profile.entityType}#{entity_id}'
-            range_key = f'{profile.entityType}#METADATA'
+            hash_key = f'{profile.savedProfileType}#{profile.savedProfileId}'
+            range_key = f'{profile.savedProfileType}#METADATA'
             profile_item_keys.append((hash_key, range_key))
 
-            entity_fields = self.entity_field_map.get(profile.entityType, {})
+            entity_fields = self.entity_field_map.get(profile.savedProfileType, {})
             profile_item_keys.extend(
                 (hash_key, key_suffix)
                 for field, key_suffix in entity_fields.items()
@@ -68,8 +65,8 @@ class SavedProfilesUsecase:
         entity_data_list: List[dict] = [
             {
                 '__typename': 'Startup' if entity.startupId else 'Enabler',
-                'isSaved': True if entity.startupId else is_saved_map[entity.enablerId],
                 **entity.model_dump(),
+                'isSaved': True,
             }
             for entity in entities
         ]
