@@ -6,16 +6,16 @@ import { util } from "@aws-appsync/utils";
  * @returns {import('@aws-appsync/utils').DynamoDBQueryRequest} the request
  */
 export function request(ctx) {
-    const { entityType } = ctx.arguments;
+    const { filterEntityType } = ctx.arguments;
 
     return {
         operation: "Scan",
         index: "GSI1PK",
-        ...(entityType && {
+        ...(filterEntityType && {
             filter: {
-                expression: "begins_with(rangeKey, :entityType)",
+                expression: "begins_with(rangeKey, :filterEntityType)",
                 expressionValues: {
-                    ":entityType": util.dynamodb.toDynamoDB(`${entityType}#`)
+                    ":filterEntityType": util.dynamodb.toDynamoDB(`${filterEntityType}#`)
                 }
             }
         })
@@ -32,33 +32,46 @@ export function response(ctx) {
         util.error(ctx.error.message, ctx.error.type);
     }
 
+    const { entityId, entityType } = ctx.arguments;
+
     const { items } = ctx.result;
     const entityMap = {};
+    const savedProfiles = {}; // Track saved profiles using an object instead of Set
 
     // First pass: collect all items for each entity
     items.forEach(item => {
-        const [entityType, entityId] = item.hashKey.split('#');
+        const [itemEntityType, itemEntityId] = item.hashKey.split('#');
 
-        if (!entityMap[entityId]) {
-            entityMap[entityId] = {
-                entityType,
+        // Check if this is a saved profile entry for the current user
+        if (entityId && entityType &&
+            item.hashKey === `${entityType}#${entityId}` &&
+            item.rangeKey.includes('SAVED_PROFILE')) {
+            // Extract the saved profile ID from rangeKey (format: ENTITY_TYPE#SAVED_PROFILE#PROFILE_TYPE#PROFILE_ID)
+            const savedProfileId = item.rangeKey.split('#')[3];
+            savedProfiles[savedProfileId] = true; // Use object property instead of Set.add()
+        }
+
+        if (!entityMap[itemEntityId]) {
+            entityMap[itemEntityId] = {
+                entityType: itemEntityType,
                 items: []
             };
         }
-        entityMap[entityId].items.push(item);
+        entityMap[itemEntityId].items.push(item);
     });
 
     // Second pass: process each entity's items
     const entities = [];
-    Object.entries(entityMap).forEach(([entityId, { entityType, items }]) => {
+    Object.entries(entityMap).forEach(([itemEntityId, { entityType: itemEntityType, items }]) => {
         const entity = {
-            [entityType === 'STARTUP' ? 'startupId' : 'enablerId']: entityId,
-            __typename: entityType === 'STARTUP' ? 'Startup' : 'Enabler'
+            [itemEntityType === 'STARTUP' ? 'startupId' : 'enablerId']: itemEntityId,
+            __typename: itemEntityType === 'STARTUP' ? 'Startup' : 'Enabler',
+            isSaved: savedProfiles[itemEntityId] === true // Check if profile exists in object
         };
 
         // Process all items for this entity
         items.forEach(item => {
-            if (entityType === 'STARTUP') {
+            if (itemEntityType === 'STARTUP') {
                 switch (item.rangeKey) {
                     case 'STARTUP#METADATA':
                         Object.assign(entity, {
@@ -84,7 +97,7 @@ export function response(ctx) {
                         entity.founders = item.founders;
                         break;
                 }
-            } else if (entityType === 'ENABLER') {
+            } else if (itemEntityType === 'ENABLER') {
                 switch (item.rangeKey) {
                     case 'ENABLER#METADATA':
                         Object.assign(entity, {
