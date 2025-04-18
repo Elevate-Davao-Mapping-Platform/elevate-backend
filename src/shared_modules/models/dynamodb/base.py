@@ -16,3 +16,4 @@ class Entities(Model):
     rangeKey = UnicodeAttribute(range_key=True)
 
     createdAt = UnicodeAttribute(null=True)
+    updatedAt = UnicodeAttribute(null=True)

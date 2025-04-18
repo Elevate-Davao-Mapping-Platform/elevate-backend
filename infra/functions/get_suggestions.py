@@ -8,6 +8,7 @@ from constructs import Construct
 
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
+from infra.functions.lambda_utils import LambdaUtils
 
 
 class GetSuggestions(Construct):
@@ -81,13 +82,9 @@ class GetSuggestions(Construct):
             role=lambda_role,
             layers=[self.common_dependencies_layer],
             bundling=BundlingOptions(
-                asset_excludes=[
-                    '**/__pycache__',
-                    'local_tests',
-                    'generate_suggestions',
-                    'rag_api',
-                    'get_analytics',
-                ],
+                asset_excludes=LambdaUtils.get_asset_excludes(
+                    ['get_suggestions', 'shared_modules']
+                ),
             ),
         )
 

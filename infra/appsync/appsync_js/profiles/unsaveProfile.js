@@ -1,23 +1,21 @@
 import { util } from '@aws-appsync/utils';
 
 export function request(ctx) {
-    const { entityType, entityId, matchPairId, matchPairType } = ctx.args.input;
+    const {
+        entityType,
+        entityId,
+        savedProfileId,
+        savedProfileType
+    } = ctx.args.input;
 
     return {
-        operation: 'UpdateItem',
+        operation: 'DeleteItem',
         key: util.dynamodb.toMapValues({
             hashKey: `${entityType}#${entityId}`,
-            rangeKey: `${entityType}#SUGGESTION#${matchPairType}#${matchPairId}`
+            rangeKey: `${entityType}#SAVED_PROFILE#${savedProfileType}#${savedProfileId}`
         }),
-        update: {
-            expression: `SET isSaved = :isSaved`,
-            expressionValues: util.dynamodb.toMapValues({
-                ':isSaved': true
-            })
-        }
     };
 }
-
 
 /**
  * Handles the response from DynamoDB
@@ -33,11 +31,9 @@ export function response(ctx) {
         };
     }
 
-    const { suggestionId } = ctx.result;
-
     return {
-        id: suggestionId,
-        message: "Suggestion successfully saved",
+        id: ctx.args.input.entityId,
+        message: `Profile unsaved successfully`,
         success: true
     };
 }

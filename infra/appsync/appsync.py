@@ -20,6 +20,7 @@ class AppsyncAPI(Construct):
         entity_table: dynamodb.Table = kwargs.pop('entity_table', None)
         get_suggestions_lambda: lambda_.Function = kwargs.pop('get_suggestions_lambda', None)
         get_analytics_lambda: lambda_.Function = kwargs.pop('get_analytics_lambda', None)
+        get_saved_profiles_lambda: lambda_.Function = kwargs.pop('get_saved_profiles_lambda', None)
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -33,7 +34,8 @@ class AppsyncAPI(Construct):
         self._setup_startup_resolvers(entity_table_data_source)
         self._setup_enabler_resolvers(entity_table_data_source)
         self._setup_entity_list_resolvers(entity_table_data_source)
-        self._setup_suggestion_resolvers(get_suggestions_lambda, entity_table_data_source)
+        self._setup_suggestion_resolvers(get_suggestions_lambda)
+        self._setup_profile_resolvers(entity_table_data_source, get_saved_profiles_lambda)
         self._setup_analytics_resolvers(get_analytics_lambda)
 
         # Store API outputs
@@ -229,7 +231,6 @@ class AppsyncAPI(Construct):
     def _setup_suggestion_resolvers(
         self,
         get_suggestions_lambda: lambda_.Function,
-        entity_table_data_source: appsync.DynamoDbDataSource,
     ) -> None:
         """Sets up DynamoDB data source and resolvers for suggestion functionality."""
         suggestion_lambda_data_source = self.api.add_lambda_data_source(
@@ -243,15 +244,40 @@ class AppsyncAPI(Construct):
             field_name='getSuggestions',
         )
 
-        folder_root = './infra/appsync/appsync_js/suggestions'
+    def _setup_profile_resolvers(
+        self,
+        entity_table_data_source: appsync.DynamoDbDataSource,
+        get_saved_profiles_lambda: lambda_.Function,
+    ) -> None:
+        """Sets up DynamoDB data source and resolvers for profile functionality."""
+        folder_root = './infra/appsync/appsync_js/profiles'
 
-        save_suggestion_js = f'{folder_root}/saveSuggestion.js'
+        save_profile_js = f'{folder_root}/saveProfile.js'
         entity_table_data_source.create_resolver(
-            f'{self.config.prefix}-MutationSaveSuggestionResolver',
+            f'{self.config.prefix}-MutationSaveProfileResolver',
             type_name='Mutation',
-            field_name='saveSuggestion',
-            code=appsync.Code.from_asset(save_suggestion_js),
+            field_name='saveProfile',
+            code=appsync.Code.from_asset(save_profile_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        unsave_profile_js = f'{folder_root}/unsaveProfile.js'
+        entity_table_data_source.create_resolver(
+            f'{self.config.prefix}-MutationUnsaveProfileResolver',
+            type_name='Mutation',
+            field_name='unsaveProfile',
+            code=appsync.Code.from_asset(unsave_profile_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        get_saved_profiles_lambda_resolver = self.api.add_lambda_data_source(
+            f'{self.config.prefix}-get-saved-profiles-lambda-data-source',
+            get_saved_profiles_lambda,
+        )
+        get_saved_profiles_lambda_resolver.create_resolver(
+            f'{self.config.prefix}-QueryGetSavedProfilesResolver',
+            type_name='Query',
+            field_name='getSavedProfiles',
         )
 
     def _setup_analytics_resolvers(self, analytics_lambda: lambda_.Function) -> None:

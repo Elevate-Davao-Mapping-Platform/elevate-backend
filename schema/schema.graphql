@@ -281,13 +281,13 @@ type Analytics {
 }
 
 # ===================================
-# Suggestion related types
+# Profile related types
 # ===================================
-input SaveSuggestionInput {
+input SaveProfileInput {
   entityType: EntityType!
   entityId: String!
-  matchPairId: String!
-  matchPairType: EntityType!
+  savedProfileId: String!
+  savedProfileType: EntityType!
 }
 
 # ===================================
@@ -301,6 +301,7 @@ type Query {
   getMapList(entityType: EntityType): [Entity!] @aws_api_key
   getSuggestions(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
   getAnalytics(entityType: EntityType!, entityId: String!): Analytics! @aws_api_key
+  getSavedProfiles(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
 }
 
 type Mutation {
@@ -312,7 +313,8 @@ type Mutation {
   createEnabler(input: EnablerInput!): MutationResponse! @aws_api_key
   updateEnabler(input: EnablerInput!, enablerId: String!): MutationResponse!
     @aws_api_key
-  saveSuggestion(input: SaveSuggestionInput!): MutationResponse! @aws_api_key
+  saveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
+  unsaveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
 }
 
 type Subscription {
