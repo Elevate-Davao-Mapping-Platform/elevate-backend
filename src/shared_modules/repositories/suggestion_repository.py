@@ -9,6 +9,7 @@ from aws_lambda_powertools import Logger
 from pynamodb.connection import Connection
 from pynamodb.exceptions import PynamoDBConnectionError, QueryError, TableDoesNotExist
 from shared_modules.constants.entity_constants import EntityType
+from shared_modules.models.dynamodb.entity import Entity
 from shared_modules.models.dynamodb.suggestions import Suggestions
 from shared_modules.models.schema.suggestions import SuggestionMatchList
 
@@ -17,10 +18,12 @@ class SuggestionRepository:
     def __init__(self):
         self.conn = Connection(region=os.getenv('REGION'))
         self.logger = Logger()
+        self.suggestion_discriminator = 'SUGGESTION'
+        self.saved_profile_discriminator = 'SAVED_PROFILE'
 
     def get_suggestions(
         self, entity_type: EntityType, entity_id: str
-    ) -> Tuple[HTTPStatus, List[Suggestions], str]:
+    ) -> Tuple[HTTPStatus, List[Entity], List[Entity], str]:
         """
         Get suggestions for a given entity.
 
@@ -33,27 +36,35 @@ class SuggestionRepository:
         """
         try:
             # Get all suggestions for the given entity
-            suggestions = Suggestions.query(
+            entities = Entity.query(
                 hash_key=f'{entity_type}#{entity_id}',
-                range_key_condition=Suggestions.rangeKey.startswith(f'{entity_type}#SUGGESTION#'),
             )
 
-            return HTTPStatus.OK, suggestions, None
+            saved_profiles = []
+            suggestions = []
+
+            for entity in entities:
+                if entity.rangeKey.startswith(f'{entity_type}#{self.saved_profile_discriminator}#'):
+                    saved_profiles.append(entity)
+                elif entity.rangeKey.startswith(f'{entity_type}#{self.suggestion_discriminator}#'):
+                    suggestions.append(entity)
+
+            return HTTPStatus.OK, suggestions, saved_profiles, None
 
         except QueryError as e:
             error_msg = f'Failed to get suggestions: {str(e)}'
             self.logger.error(error_msg)
-            return HTTPStatus.NOT_FOUND, None, error_msg
+            return HTTPStatus.NOT_FOUND, None, None, error_msg
 
         except (PynamoDBConnectionError, TableDoesNotExist) as e:
             error_msg = f'Failed to get suggestions: {str(e)}'
             self.logger.error(error_msg)
-            return HTTPStatus.INTERNAL_SERVER_ERROR, None, error_msg
+            return HTTPStatus.INTERNAL_SERVER_ERROR, None, None, error_msg
 
         except Exception as e:
             error_msg = f'Internal server error: {str(e)}'
             self.logger.error(error_msg)
-            return HTTPStatus.INTERNAL_SERVER_ERROR, None, error_msg
+            return HTTPStatus.INTERNAL_SERVER_ERROR, None, None, error_msg
 
     def save_suggestions(self, suggestion_list: SuggestionMatchList) -> Tuple[HTTPStatus, str, str]:
         """
