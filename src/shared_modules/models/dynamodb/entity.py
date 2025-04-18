@@ -81,6 +81,7 @@ class Entity(Model):
     description = UnicodeAttribute(null=True)
     location = Location(null=True)
     createdAt = UnicodeAttribute(null=True)
+    updatedAt = UnicodeAttribute(null=True)
     contacts = ListAttribute(of=Contact)
 
     # Startup-specific attributes
@@ -109,3 +110,11 @@ class Entity(Model):
     entityType = UnicodeAttribute(null=True)
     savedProfileId = UnicodeAttribute(null=True)
     savedProfileType = UnicodeAttribute(null=True)
+
+    # Suggestion Attributes
+    suggestionId = UnicodeAttribute(null=False)
+    certainty = NumberAttribute(null=False)
+    rationale = UnicodeAttribute(null=False)
+    matchPairId = UnicodeAttribute(null=False)
+    matchPairType = UnicodeAttribute(null=False)
+    matchPairName = UnicodeAttribute(null=False)

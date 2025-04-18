@@ -45,7 +45,7 @@ class AnalyticsUsecase:
 
         startup_maturity_count_map = {}
 
-        status, suggestions, message = self.suggestion_repository.get_suggestions(
+        status, suggestions, saved_profiles, message = self.suggestion_repository.get_suggestions(
             entity_type, entity_id
         )
         if status != HTTPStatus.OK:
@@ -53,6 +53,8 @@ class AnalyticsUsecase:
                 response=message,
                 status=status,
             )
+
+        saved_profile_ids = [saved_profile.savedProfileId for saved_profile in saved_profiles]
 
         for suggestion in suggestions:
             status, entity_list, message = self.entity_repository.batch_get_entities(
@@ -122,7 +124,7 @@ class AnalyticsUsecase:
                         'ignored': 0,
                     }
 
-                if suggestion.isSaved:
+                if entity.enablerId in saved_profile_ids:
                     investor_engagement_map[year_month_id]['responded'] += 1
                 else:
                     investor_engagement_map[year_month_id]['ignored'] += 1
@@ -137,7 +139,7 @@ class AnalyticsUsecase:
                         'ignored': 0,
                     }
 
-                if suggestion.isSaved:
+                if entity.startupId in saved_profile_ids:
                     startup_engagement_map[year_month_id]['responded'] += 1
                 else:
                     startup_engagement_map[year_month_id]['ignored'] += 1
