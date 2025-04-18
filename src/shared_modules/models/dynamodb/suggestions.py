@@ -1,4 +1,4 @@
-from pynamodb.attributes import BooleanAttribute, NumberAttribute, UnicodeAttribute
+from pynamodb.attributes import NumberAttribute, UnicodeAttribute
 from shared_modules.models.dynamodb.base import Entities
 
 
@@ -18,4 +18,3 @@ class Suggestions(Entities, discriminator='Suggestion'):
     matchPairId = UnicodeAttribute(null=False)
     matchPairType = UnicodeAttribute(null=False)
     matchPairName = UnicodeAttribute(null=False)
-    isSaved = BooleanAttribute(default=False)

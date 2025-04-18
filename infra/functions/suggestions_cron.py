@@ -17,6 +17,7 @@ from constructs import Construct
 
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
+from infra.functions.lambda_utils import LambdaUtils
 
 
 class SuggestionsCron(Construct):
@@ -129,13 +130,9 @@ class SuggestionsCron(Construct):
             role=lambda_role,
             layers=[self.common_dependencies_layer, self.suggestions_cron_layer],
             bundling=BundlingOptions(
-                asset_excludes=[
-                    '**/__pycache__',
-                    'local_tests',
-                    'rag_api',
-                    'get_suggestions',
-                    'get_analytics',
-                ],
+                asset_excludes=LambdaUtils.get_asset_excludes(
+                    ['generate_suggestions', 'shared_modules']
+                ),
             ),
         )
 

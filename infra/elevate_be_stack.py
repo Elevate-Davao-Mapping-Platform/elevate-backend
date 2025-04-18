@@ -7,6 +7,7 @@ from infra.cognito.user_pool import UserPoolConstruct
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
 from infra.functions.get_analytics import GetAnalytics
+from infra.functions.get_saved_profiles import GetSavedProfiles
 from infra.functions.get_suggestions import GetSuggestions
 from infra.functions.rag_api import LLMRAGAPI
 from infra.functions.suggestions_cron import SuggestionsCron
@@ -46,7 +47,9 @@ class ElevateBeStack(Stack):
 
         entity_table = EntityTable(self, 'EntityTable', config=self.config)
 
-        # LLM RAG Lambda
+        # ---------------------------------------------------------------------------- #
+        #                               Lambda Functions                               #
+        # ---------------------------------------------------------------------------- #
         common_dependencies_layer = CommonDependenciesLayer(
             self,
             'CommonDependenciesLayer',
@@ -62,7 +65,6 @@ class ElevateBeStack(Stack):
             common_dependencies_layer=common_dependencies_layer,
         )
 
-        # Get Suggestions Lambda
         get_suggestions = GetSuggestions(
             self,
             'GetSuggestions',
@@ -71,7 +73,6 @@ class ElevateBeStack(Stack):
             common_dependencies_layer=common_dependencies_layer,
         )
 
-        # Get Analytics Lambda
         get_analytics = GetAnalytics(
             self,
             'GetAnalytics',
@@ -80,7 +81,17 @@ class ElevateBeStack(Stack):
             common_dependencies_layer=common_dependencies_layer,
         )
 
-        # Appsync API
+        get_saved_profiles = GetSavedProfiles(
+            self,
+            'GetSavedProfiles',
+            config=self.config,
+            entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
+        )
+
+        # ---------------------------------------------------------------------------- #
+        #                                Appsync Config                                #
+        # ---------------------------------------------------------------------------- #
         api = AppsyncAPI(
             self,
             f'{main_resources_name}-{stage}-appsync-api',
@@ -90,6 +101,7 @@ class ElevateBeStack(Stack):
             entity_table=entity_table.entity_table,
             get_suggestions_lambda=get_suggestions.get_suggestions_lambda,
             get_analytics_lambda=get_analytics.get_analytics_lambda,
+            get_saved_profiles_lambda=get_saved_profiles.get_saved_profiles_lambda,
         )
 
         llm_rag_api.set_appsync_api(api)
@@ -122,7 +134,9 @@ class ElevateBeStack(Stack):
         # Add Cognito access to the bucket
         general_bucket_construct.add_cognito_access(cognito_authenticated_role)
 
-        # Outputs
+        # ---------------------------------------------------------------------------- #
+        #                                    Outputs                                   #
+        # ---------------------------------------------------------------------------- #
         CfnOutput(self, 'GraphQLAPIID', value=api.api_id)
         CfnOutput(self, 'GraphQLAPIURL', value=api.graphql_url)
         CfnOutput(self, 'GraphQL API Key', value=api.api_key)

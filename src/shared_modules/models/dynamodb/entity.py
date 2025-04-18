@@ -102,3 +102,10 @@ class Entity(Model):
     preferredBusinessModels = ListAttribute(of=UnicodeAttribute, null=True)
     investmentCriteria = ListAttribute(of=InvestmentCriteria, null=True)
     portfolio = ListAttribute(of=PortfolioItem, null=True)
+
+    # Saved Profile attributes
+    enablerId = UnicodeAttribute(null=True)
+    startupId = UnicodeAttribute(null=True)
+    entityType = UnicodeAttribute(null=True)
+    savedProfileId = UnicodeAttribute(null=True)
+    savedProfileType = UnicodeAttribute(null=True)
