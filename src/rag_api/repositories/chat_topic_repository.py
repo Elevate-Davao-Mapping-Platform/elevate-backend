@@ -2,7 +2,7 @@ import os
 import uuid
 from datetime import datetime
 from http import HTTPStatus
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pytz
 from aws_lambda_powertools import Logger
@@ -93,4 +93,35 @@ class ChatTopicRepository:
         except PynamoDBConnectionError as db_error:
             message = f'Connection error occurred, Please check config(region, table name, etc): {str(db_error)}'
             self.logger.exception(f'[{self.core_obj_key}={chat_topic_id}] {message}')
+            return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
+
+    def update_chat_topic(
+        self, chat_topic: ChatTopic, chat_topic_in: Optional[ChatTopicIn] = None
+    ) -> Tuple[HTTPStatus, ChatTopic, str]:
+        try:
+            current_date = datetime.now(tz=pytz.timezone('Asia/Manila')).isoformat()
+            actions = [ChatTopic.updateDate.set(current_date)]
+
+            if chat_topic_in:
+                for attr, value in chat_topic_in.model_dump().items():
+                    if value is not None and hasattr(ChatTopic, attr):
+                        actions.append(getattr(ChatTopic, attr).set(value))
+
+            chat_topic.update(actions=actions)
+
+            return HTTPStatus.OK, chat_topic, None
+
+        except PutError as e:
+            message = f'Failed to update chat topic: {str(e)}'
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic.entryId}] {message}')
+            return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
+
+        except TableDoesNotExist as db_error:
+            message = f'Error on Table, Please check config to make sure table is created: {str(db_error)}'
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic.entryId}] {message}')
+            return HTTPStatus.INTERNAL_SERVER_ERROR, None, message
+
+        except PynamoDBConnectionError as db_error:
+            message = f'Connection error occurred, Please check config(region, table name, etc): {str(db_error)}'
+            self.logger.exception(f'[{self.core_obj_key}={chat_topic.entryId}] {message}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, message

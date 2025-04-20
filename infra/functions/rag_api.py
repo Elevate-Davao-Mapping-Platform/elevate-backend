@@ -83,6 +83,7 @@ class LLMRAGAPI(Construct):
                     'dynamodb:GetItem',
                     'dynamodb:PutItem',
                     'dynamodb:Scan',
+                    'dynamodb:UpdateItem',
                 ],
                 resources=[self.entity_table.table_arn],
             )
