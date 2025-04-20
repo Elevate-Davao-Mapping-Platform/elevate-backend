@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from http import HTTPStatus
 from typing import List, Optional
 
@@ -170,8 +171,14 @@ class LLMUsecase:
 
             self._send_chat_chunk(chat_in, response_text)
 
+        time.sleep(1)
+
         if chunk_buffer_list:
             response_text += ''.join(chunk_buffer_list)
             self._send_chat_chunk(chat_in, response_text)
+
+        time.sleep(1)
+
+        self._send_chat_chunk(chat_in, ChatConstants.END_OF_MESSAGE)
 
         return response_text

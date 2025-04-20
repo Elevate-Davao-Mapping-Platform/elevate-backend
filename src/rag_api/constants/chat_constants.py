@@ -7,4 +7,5 @@ class ChatType(str, Enum):
 
 
 class ChatConstants:
-    CHUNK_BUFFER_LIMIT = 5
+    CHUNK_BUFFER_LIMIT = 10
+    END_OF_MESSAGE = 'END_OF_MESSAGE'
