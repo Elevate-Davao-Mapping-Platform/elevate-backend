@@ -31,10 +31,14 @@ class ChatUsecase:
         # Create Chat Topic
         chat_topic_id = chat_prompt_in.chatTopicId
         query_chat_topic_status = HTTPStatus.OK
+        chat_topic_entry = None
+
         if chat_topic_id:
-            query_chat_topic_status, _, _ = self.chat_topic_repository.query_chat_topic(
-                chat_prompt_in.userId, chat_topic_id
-            )
+            (
+                query_chat_topic_status,
+                chat_topic_entry,
+                _,
+            ) = self.chat_topic_repository.query_chat_topic(chat_prompt_in.userId, chat_topic_id)
 
         if not chat_topic_id or query_chat_topic_status != HTTPStatus.OK:
             status, chat_topic, message = self.chat_topic_repository.store_chat_topic(
@@ -59,6 +63,15 @@ class ChatUsecase:
             )
             chats_sorted = sorted(chats, key=lambda x: x.createdAt, reverse=True)
             chat_history = [chat.message for chat in chats_sorted]
+
+            status, chat_topic_entry, message = self.chat_topic_repository.update_chat_topic(
+                chat_topic=chat_topic_entry,
+            )
+            if status != HTTPStatus.OK:
+                return ErrorResponse(
+                    response=message,
+                    status=status,
+                )
 
         # Store the prompt chat
         user_prompt_chat_in = ChatIn(
