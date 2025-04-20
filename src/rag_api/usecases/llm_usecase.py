@@ -6,6 +6,7 @@ from typing import List, Optional
 import boto3
 from aws_lambda_powertools import Logger
 from botocore.exceptions import ClientError
+from rag_api.constants.chat_constants import ChatConstants
 from rag_api.external.graphql_gateway import GraphQLGateway
 from rag_api.models.chat import ChatPromptIn, SendChatChunkIn
 from rag_api.usecases.knowledge_base_usecase import KnowledgeBaseUsecase
@@ -114,6 +115,21 @@ class LLMUsecase:
                 'status': HTTPStatus.INTERNAL_SERVER_ERROR,
             }
 
+    def _send_chat_chunk(self, chat_in: ChatPromptIn, response_text: str):
+        """Helper function to send chat chunks to the GraphQL gateway.
+
+        Args:
+            chat_in (ChatPromptIn): The input chat prompt containing metadata
+            response_text (str): The response text to send
+        """
+        send_chat_chunk_in = SendChatChunkIn(
+            chatTopicId=chat_in.chatTopicId,
+            userId=chat_in.userId,
+            entryId=chat_in.entryId,
+            response=response_text,
+        )
+        self.graphql_gateway.send_chat_chunk(send_chat_chunk_in)
+
     def generate_response(self, chat_in: ChatPromptIn, chat_history_context: str):
         """
         Generate a response to a user prompt using a vector store index and a language model.
@@ -141,15 +157,21 @@ class LLMUsecase:
         )
 
         response_text = ''
-        for response_chunk in self.invoke_llm(prompt):
-            response_text += response_chunk
+        chunk_buffer_list = []
 
-            send_chat_chunk_in = SendChatChunkIn(
-                chatTopicId=chat_in.chatTopicId,
-                userId=chat_in.userId,
-                entryId=chat_in.entryId,
-                response=response_text,
-            )
-            self.graphql_gateway.send_chat_chunk(send_chat_chunk_in)
+        for response_chunk in self.invoke_llm(prompt):
+            chunk_buffer_list.append(response_chunk)
+
+            if len(chunk_buffer_list) < ChatConstants.CHUNK_BUFFER_LIMIT:
+                continue
+
+            response_text += ''.join(chunk_buffer_list)
+            chunk_buffer_list = []
+
+            self._send_chat_chunk(chat_in, response_text)
+
+        if chunk_buffer_list:
+            response_text += ''.join(chunk_buffer_list)
+            self._send_chat_chunk(chat_in, response_text)
 
         return response_text
