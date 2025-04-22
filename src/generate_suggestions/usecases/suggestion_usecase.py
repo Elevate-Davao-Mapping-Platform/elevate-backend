@@ -25,14 +25,34 @@ class SuggestionUsecase:
         :param list entity_ids_selected: The entity IDs selected to generate a response for.
         :return Union[SuggestionMatchList, ErrorResponse]: The response from the LLM.
         """
-        self.logger.debug('Getting suggestions...')
+        self.logger.debug(
+            {
+                'message': 'Starting suggestion generation',
+                'entity_ids_selected': entity_ids_selected,
+            }
+        )
+
         try:
             status, entities_available, message = self.entity_repository.get_entity_list()
             if status != HTTPStatus.OK:
+                self.logger.warning(
+                    {
+                        'message': 'Failed to get entity list',
+                        'status': status,
+                        'error_message': message,
+                    }
+                )
                 return ErrorResponse(
                     response=message,
                     status=status,
                 )
+
+            self.logger.info(
+                {
+                    'message': 'Successfully retrieved entity list',
+                    'entities_available_count': len(entities_available),
+                }
+            )
 
             entities_selected = (
                 [
@@ -44,13 +64,27 @@ class SuggestionUsecase:
                 else entities_available
             )
 
+            self.logger.info(
+                {
+                    'message': 'Filtered selected entities',
+                    'entities_selected_count': len(entities_selected),
+                }
+            )
+
             # Track which selected entities have received suggestions
             entities_with_suggestions = set()
             all_matches = []
 
             # First attempt to get suggestions for all entities
+            self.logger.debug('Generating initial suggestions for all entities')
             suggestions = self.llm_usecase.generate_response(entities_available, entities_selected)
             if isinstance(suggestions, ErrorResponse):
+                self.logger.warning(
+                    {
+                        'message': 'Failed to generate initial suggestions',
+                        'error': suggestions.response,
+                    }
+                )
                 return suggestions
 
             # Track which entities got suggestions in the first round
@@ -59,6 +93,14 @@ class SuggestionUsecase:
                     entities_with_suggestions.add(entity.entityId)
 
             all_matches.extend(suggestions.matches)
+
+            self.logger.info(
+                {
+                    'message': 'Initial suggestions generated',
+                    'entities_with_suggestions_count': len(entities_with_suggestions),
+                    'matches_generated': len(suggestions.matches),
+                }
+            )
 
             # Check if any selected entities didn't get suggestions
             entities_missing_suggestions = [
@@ -70,7 +112,10 @@ class SuggestionUsecase:
             # If there are entities missing suggestions, do another round focusing on them
             if entities_missing_suggestions:
                 self.logger.info(
-                    f'Generating additional suggestions for {len(entities_missing_suggestions)} entities'
+                    {
+                        'message': 'Generating additional suggestions for missing entities',
+                        'missing_entities_count': len(entities_missing_suggestions),
+                    }
                 )
 
                 # Create a new prompt focusing only on the missing entities
@@ -78,15 +123,51 @@ class SuggestionUsecase:
                     entities_available, entities_missing_suggestions
                 )
                 if isinstance(suggestions, ErrorResponse):
+                    self.logger.warning(
+                        {
+                            'message': 'Failed to generate additional suggestions',
+                            'error': suggestions.response,
+                        }
+                    )
                     return suggestions
 
                 if not isinstance(suggestions, ErrorResponse):
+                    additional_matches = len(suggestions.matches)
                     all_matches.extend(suggestions.matches)
+                    self.logger.info(
+                        {
+                            'message': 'Additional suggestions generated successfully',
+                            'additional_matches_count': additional_matches,
+                        }
+                    )
 
-            return SuggestionMatchList(matches=all_matches)
+            final_response = SuggestionMatchList(matches=all_matches)
+
+            status, message, error = self.suggestion_repository.save_suggestions(final_response)
+            if status != HTTPStatus.OK:
+                self.logger.warning({'message': 'Failed to save suggestions', 'error': error})
+                return ErrorResponse(
+                    response=error,
+                    status=status,
+                )
+
+            self.logger.info(
+                {
+                    'message': 'Suggestion generation completed successfully',
+                    'total_matches_count': len(all_matches),
+                }
+            )
+            return final_response
 
         except Exception as e:
-            self.logger.error(f'Error generating response: {e}')
+            self.logger.error(
+                {
+                    'message': 'Error generating suggestions',
+                    'error': str(e),
+                    'entity_ids_selected': entity_ids_selected,
+                },
+                exc_info=True,
+            )
             return ErrorResponse(
                 response=str(e),
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
