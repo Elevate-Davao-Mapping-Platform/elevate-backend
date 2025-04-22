@@ -74,11 +74,23 @@ class SuggestionRepository:
             suggestion_list (SuggestionMatchList): List of suggestion matches to save
         """
         try:
+            # Track unique suggestion keys to prevent duplicates
+            unique_suggestions = set()
+
             with Suggestions.batch_write() as batch:
                 for match in suggestion_list.matches:
                     # Create two suggestions (one for each entity in the pair)
                     for i, entity in enumerate(match.matchPair):
                         other_entity = match.matchPair[1 - i]  # Get the other entity in the pair
+
+                        # Create a unique key for this suggestion pair
+                        suggestion_key = f'{entity.entityType}#{entity.entityId}#{other_entity.entityType}#{other_entity.entityId}'
+
+                        # Skip if we've already processed this pair
+                        if suggestion_key in unique_suggestions:
+                            continue
+
+                        unique_suggestions.add(suggestion_key)
 
                         suggestion_id = str(uuid4())
                         current_date = datetime.now(tz=pytz.timezone('Asia/Manila')).isoformat()
