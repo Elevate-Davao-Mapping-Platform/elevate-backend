@@ -89,6 +89,7 @@ class SuggestionRepository:
                             rangeKey=f'{entity.entityType}#SUGGESTION#{match_pair_id}',
                             suggestionId=suggestion_id,
                             matchPairId=match_pair_id,
+                            matchPairName=other_entity.name,
                             matchPairType=other_entity.entityType,
                             certainty=match.certainty,
                             rationale=match.rationale,
