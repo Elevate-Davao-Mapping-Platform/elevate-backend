@@ -36,13 +36,15 @@ class LLMUsecase:
             if other_entities
             else None
         )
+
         base_prompt = (
             'You are a context-aware startup ecosystem assistant for Davao City. Your goal is to help startups, '
             'investors, and ecosystem enablers by providing relevant, timely, and personalized support based on '
             "the user's needs and the local startup environment.\n\n"
-            f'## User Input:\n{prompt}\n\n'
-            '## Chat History:\n'
+            '## Conversation Context:\n'
+            'The following is the relevant conversation history. Use this context to maintain continuity and build upon previous interactions:\n'
             f'{chat_history_context}\n\n'
+            f'## Current User Input:\n{prompt}\n\n'
             '## Retrieved Knowledge Base Data:\n'
             f'{vector_retrieval_chunks}\n'
         )
@@ -65,12 +67,14 @@ class LLMUsecase:
 
         instructions = (
             '## Instructions:\n'
-            '- Your responses must reflect the current startup landscape of Davao City.\n'
-            '- Incorporate specific local context (e.g., known incubators, typical funding rounds, or local startup challenges).\n'
-            '- Leverage the retrieved knowledge base to offer tailored recommendations.\n'
-            '- If information is not available, ask clarifying questions instead of making assumptions.\n'
-            '- Keep the response concise, friendly, and helpful.\n'
-            '- Never hallucinate; rely only on the provided context.\n\n'
+            '- Maintain conversation continuity by referencing and building upon the previous chat context\n'
+            '- If the current question relates to previous discussion, explicitly acknowledge and connect the points\n'
+            '- Your responses must reflect the current startup landscape of Davao City\n'
+            '- Incorporate specific local context (e.g., known incubators, typical funding rounds, or local startup challenges)\n'
+            '- Leverage the retrieved knowledge base to offer tailored recommendations\n'
+            '- If information is not available, ask clarifying questions instead of making assumptions\n'
+            '- Keep the response concise, friendly, and helpful\n'
+            '- Never hallucinate; rely only on the provided context\n\n'
             '## Response:\n'
         )
 

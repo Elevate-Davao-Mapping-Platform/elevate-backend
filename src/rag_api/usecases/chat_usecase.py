@@ -28,19 +28,15 @@ class ChatUsecase:
         status = HTTPStatus.OK
         chat_history = []
 
-        # Create Chat Topic
         chat_topic_id = chat_prompt_in.chatTopicId
-        query_chat_topic_status = HTTPStatus.OK
         chat_topic_entry = None
 
         if chat_topic_id:
-            (
-                query_chat_topic_status,
-                chat_topic_entry,
-                _,
-            ) = self.chat_topic_repository.query_chat_topic(chat_prompt_in.userId, chat_topic_id)
+            _, chat_topic_entry, _ = self.chat_topic_repository.query_chat_topic(
+                user_id=chat_prompt_in.userId, chat_topic_id=chat_topic_id
+            )
 
-        if not chat_topic_id or query_chat_topic_status != HTTPStatus.OK:
+        if not chat_topic_id or not chat_topic_entry:
             status, chat_topic, message = self.chat_topic_repository.store_chat_topic(
                 chat_topic_in=ChatTopicIn(
                     userId=chat_prompt_in.userId,
