@@ -1,12 +1,13 @@
 import os
 from http import HTTPStatus
-from typing import Union
+from typing import List, Union
 
 import instructor
 from anthropic import AnthropicBedrock
 from aws_lambda_powertools import Logger
 from instructor.utils import disable_pydantic_error_url
 from shared_modules.models.dynamodb.suggestions import Suggestions
+from shared_modules.models.schema.entity import EntitySchema
 from shared_modules.models.schema.message import ErrorResponse
 from shared_modules.models.schema.suggestions import SuggestionMatchList
 
@@ -18,14 +19,29 @@ class LLMUsecase:
         self.bedrock_region = os.getenv('BEDROCK_AWS_REGION')
         self.max_tokens = 4096
 
-    def build_prompt(self, entities_json):
+    def build_prompt(
+        self, entities_available: List[EntitySchema], entities_selected: List[EntitySchema]
+    ):
+        """
+        Build a prompt for the LLM to generate a list of suggested matches.
+
+        :param list entities_available: The entities available to generate a response for.
+        :param list entities_selected: The entities selected to generate a response for.
+        :return str: The prompt for the LLM.
+        """
         prompt = f"""
         You are an expert startup ecosystem matchmaker with deep knowledge of startup-enabler partnerships, specifically within Davao City's ecosystem.
         Your task is to analyze the provided entities (all based in Davao City) and suggest ideal partnerships based on their compatibility.
             ## Input Data:
-            {entities_json}
+            Selected Entities (Primary Focus):
+            {entities_selected}
+
+            Available Entities (Potential Matches):
+            {entities_available}
 
             ## Context:
+            IMPORTANT: Only generate matches that include at least one entity from the Selected Entities list above. Do not suggest matches between entities that are only from the Available Entities pool.
+
             All startups and enablers are based in Davao City, which means:
             - They share a common understanding of the local business environment
             - They can easily arrange face-to-face meetings and collaborations
@@ -33,7 +49,8 @@ class LLMUsecase:
             - They may already have overlapping networks within the local community
 
             ## Instructions:
-            1. Analyze each entity's profile considering these key matching criteria:
+            1. ONLY suggest matches where at least one entity is from the Selected Entities list
+            2. Analyze each entity's profile considering these key matching criteria:
 
             For Startup-Enabler Matches:
             - Industry alignment (startup's industries vs enabler's industryFocus)
@@ -56,14 +73,16 @@ class LLMUsecase:
             - Geographic synergies
             - Portfolio complementarity
 
-            2. For each suggested match:
+            3. For each suggested match:
+            - Ensure at least one entity is from the Selected Entities list
             - Explain the specific reasons for compatibility
             - Highlight potential synergies
             - Identify mutual benefits
             - Rate the match strength (High/Medium/Low)
             - Suggest specific collaboration opportunities
 
-            3. Important Guidelines:
+            4. Important Guidelines:
+            - ONLY generate matches that include entities from the Selected Entities list
             - Focus on actionable, practical partnerships within the Davao City ecosystem
             - Consider both parties' constraints and preferences in the local context
             - Prioritize matches based on alignment strength
@@ -71,14 +90,14 @@ class LLMUsecase:
             - Suggest next steps for initiating the partnership, including local venues or events for meetings
 
             ## Output Format:
-            Please provide your analysis in the following structure:
+            Please provide your analysis in the following structure, ensuring each match includes at least one Selected Entity:
 
             1. Top Startup-Enabler Matches
             2. Top Startup-Startup Matches
             3. Top Enabler-Enabler Matches
 
             For each match, include:
-            - Match Pair
+            - Match Pair (with at least one entity from Selected Entities)
             - Compatibility Score
             - Key Synergies
             - Rationale
@@ -112,15 +131,18 @@ class LLMUsecase:
         )
         return resp
 
-    def generate_response(self, entities) -> Union[SuggestionMatchList, ErrorResponse]:
+    def generate_response(
+        self, entities_available: List[EntitySchema], entities_selected: List[EntitySchema]
+    ) -> Union[SuggestionMatchList, ErrorResponse]:
         """
         Generate a response from the LLM.
 
-        :param list entities: The entities to generate a response for.
+        :param list entities_available: The entities available to generate a response for.
+        :param list entities_selected: The entities selected to generate a response for.
         :return Union[SuggestionMatchList, ErrorResponse]: The response from the LLM.
         """
         try:
-            prompt = self.build_prompt(entities)
+            prompt = self.build_prompt(entities_available, entities_selected)
             return self.invoke_llm(prompt)
 
         except Exception as e:

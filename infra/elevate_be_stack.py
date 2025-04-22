@@ -89,6 +89,15 @@ class ElevateBeStack(Stack):
             common_dependencies_layer=common_dependencies_layer,
         )
 
+        # Suggestions Cron Job
+        suggestions_cron_lambda = SuggestionsCron(
+            self,
+            'SuggestionsCron',
+            config=self.config,
+            entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
+        )
+
         # ---------------------------------------------------------------------------- #
         #                                Appsync Config                                #
         # ---------------------------------------------------------------------------- #
@@ -102,18 +111,10 @@ class ElevateBeStack(Stack):
             get_suggestions_lambda=get_suggestions.get_suggestions_lambda,
             get_analytics_lambda=get_analytics.get_analytics_lambda,
             get_saved_profiles_lambda=get_saved_profiles.get_saved_profiles_lambda,
+            suggestions_cron_lambda=suggestions_cron_lambda.lambda_suggestions_cron,
         )
 
         llm_rag_api.set_appsync_api(api)
-
-        # Suggestions Cron Job
-        SuggestionsCron(
-            self,
-            'SuggestionsCron',
-            config=self.config,
-            entity_table=entity_table,
-            common_dependencies_layer=common_dependencies_layer,
-        )
 
         # Create S3 bucket using the new construct
         general_bucket_construct = GeneralBucketConstruct(

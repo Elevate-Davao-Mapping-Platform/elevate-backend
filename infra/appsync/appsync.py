@@ -21,6 +21,7 @@ class AppsyncAPI(Construct):
         get_suggestions_lambda: lambda_.Function = kwargs.pop('get_suggestions_lambda', None)
         get_analytics_lambda: lambda_.Function = kwargs.pop('get_analytics_lambda', None)
         get_saved_profiles_lambda: lambda_.Function = kwargs.pop('get_saved_profiles_lambda', None)
+        suggestions_cron_lambda: lambda_.Function = kwargs.pop('suggestions_cron_lambda', None)
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -31,7 +32,7 @@ class AppsyncAPI(Construct):
         entity_table_data_source = self._setup_entity_table_data_source(entity_table)
         self._setup_llm_resolvers(llm_rag_api)
         self._setup_chat_resolvers(entity_table_data_source)
-        self._setup_startup_resolvers(entity_table_data_source)
+        self._setup_startup_resolvers(entity_table_data_source, suggestions_cron_lambda)
         self._setup_enabler_resolvers(entity_table_data_source)
         self._setup_entity_list_resolvers(entity_table_data_source)
         self._setup_suggestion_resolvers(get_suggestions_lambda)
@@ -148,18 +149,75 @@ class AppsyncAPI(Construct):
         )
 
     def _setup_startup_resolvers(
-        self, entity_table_data_source: appsync.DynamoDbDataSource
+        self,
+        entity_table_data_source: appsync.DynamoDbDataSource,
+        suggestions_cron_lambda: lambda_.Function,
     ) -> None:
         """Sets up DynamoDB data source and resolvers for startup functionality."""
         folder_root = './infra/appsync/appsync_js/startups'
 
+        # Create a Lambda data source for the suggestions cron
+        suggestions_cron_ds = self.api.add_lambda_data_source(
+            f'{self.config.prefix}-suggestions-cron-data-source',
+            suggestions_cron_lambda,
+        )
+
+        # Create the pipeline resolver for createStartup
         create_startup_js = f'{folder_root}/createStartup.js'
-        entity_table_data_source.create_resolver(
+
+        # Create the functions that will be part of the pipeline
+        create_startup_function = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-CreateStartupFunction',
+            name=f'{self.config.prefix_no_symbols}CreateStartupFunction',
+            api=self.api,
+            data_source=entity_table_data_source,
+            code=appsync.Code.from_asset(create_startup_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        trigger_suggestions_function = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-TriggerSuggestionsFunction',
+            name=f'{self.config.prefix_no_symbols}TriggerSuggestionsFunction',
+            api=self.api,
+            data_source=suggestions_cron_ds,
+            code=appsync.Code.from_inline(
+                """
+                export function request(ctx) {
+                    return {
+                        operation: "Invoke",
+                        invocationType: "Event",
+                        payload: ctx,
+                    };
+                }
+
+                export function response(ctx) {
+                    return ctx.prev.result;
+                }
+                """
+            ),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        # Create the pipeline resolver
+        self.api.create_resolver(
             f'{self.config.prefix}-MutationCreateStartupResolver',
             type_name='Mutation',
             field_name='createStartup',
-            code=appsync.Code.from_asset(create_startup_js),
+            code=appsync.Code.from_inline(
+                """
+                export function request(ctx) {
+                    return ctx.args;
+                }
+
+                export function response(ctx) {
+                    return ctx.prev.result;
+                }
+            """
+            ),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
+            pipeline_config=[create_startup_function, trigger_suggestions_function],
         )
 
         update_startup_js = f'{folder_root}/updateStartup.js'

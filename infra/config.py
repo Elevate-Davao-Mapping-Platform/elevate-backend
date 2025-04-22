@@ -38,6 +38,7 @@ class Config:
         self.main_resources_name = main_resources_name
         self.env = env
         self.prefix = f'{main_resources_name}-{stage}'
+        self.prefix_no_symbols = f'{main_resources_name}{stage}'
 
         # Context values
         self.region = 'ap-southeast-1'
