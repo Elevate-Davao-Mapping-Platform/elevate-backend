@@ -62,7 +62,8 @@ class AppsyncAPI(Construct):
                     authorization_type=appsync.AuthorizationType.API_KEY,
                     api_key_config=appsync.ApiKeyConfig(
                         expires=Expiration.after(Duration.days(365)),
-                        name=f'{self.config.prefix}-appsync-api-key',
+                        name=f'{self.config.prefix}-appsync-key',
+                        description='Used for the Elevate API. Do not share this key with anyone. Do not delete this key.',
                     ),
                 ),
                 additional_authorization_modes=[
