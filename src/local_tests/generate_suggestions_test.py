@@ -10,7 +10,7 @@ from generate_suggestions.controllers.suggestions_controller import (  # noqa: E
 def main():
     suggestion_controller = SuggestionsController()
     suggestions = suggestion_controller.get_suggestions(
-        entity_ids_selected=['82c59e97-eec1-4479-8cb4-83d2d8fe56a5']
+        entity_ids_selected=['608352a0-cb2c-4d38-bf42-68ebb17db7f4']
     )
 
     for index, suggestion in enumerate(suggestions.get('matches')):

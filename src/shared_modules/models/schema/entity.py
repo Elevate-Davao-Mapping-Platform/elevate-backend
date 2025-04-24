@@ -93,6 +93,9 @@ class FounderMap(BaseModel):
 class EntitySchema(BaseModel):
     model_config = ConfigDict(extra='ignore')
 
+    hashKey: Optional[str] = Field(None, description='Hash Key')
+    rangeKey: Optional[str] = Field(None, description='Range Key')
+
     # Common attributes
     description: Optional[str] = Field(
         None, description='Entity overview - crucial for initial matching assessment'
@@ -171,4 +174,8 @@ class EntitySchema(BaseModel):
     contacts: Optional[List[ContactMap]] = Field(
         None,
         description='Organization contact details - facilitates communication between matched parties',
+    )
+
+    forSuggestionGeneration: Optional[bool] = Field(
+        None, description='Flag to indicate if the entity should be used for suggestion generation'
     )

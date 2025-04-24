@@ -6,6 +6,7 @@ from aws_lambda_powertools import Logger
 from pynamodb.connection import Connection
 from pynamodb.exceptions import (
     GetError,
+    PutError,
     PynamoDBConnectionError,
     ScanError,
     TableDoesNotExist,
@@ -21,7 +22,7 @@ class EntityRepository:
 
     def get_entity_list(
         self, entity_type: str = None
-    ) -> Tuple[HTTPStatus, List[EntitySchema], str]:
+    ) -> Tuple[HTTPStatus, List[EntitySchema], List[Entity], str]:
         """Get a list of all entities (Entity and/or enablers) using GSI1PK index.
 
         :param entity_type: Optional filter for entity type ('STARTUP' or 'ENABLER')
@@ -31,13 +32,14 @@ class EntityRepository:
         :rtype: Tuple[HTTPStatus, List[EntitySchema], str]
         """
         try:
-            entities: List[Entity] = Entity.gsi1_index.scan()
+            entities = Entity.gsi1_index.scan()
+            entity_list = list(entities)
             processed_entities = []
             current_entity = None
             current_entity_id = None
 
             # Process items sequentially, assuming related items are adjacent
-            for entity in entities:
+            for entity in entity_list:
                 hash_key = entity.hashKey
                 entity_type = hash_key.split('#')[0]
                 entity_id = hash_key.split('#')[1]
@@ -53,6 +55,8 @@ class EntityRepository:
                     current_entity = {
                         'startupId' if entity_type == 'STARTUP' else 'enablerId': entity_id,
                         '__typename': 'Startup' if entity_type == 'STARTUP' else 'Enabler',
+                        'hashKey': hash_key,
+                        'rangeKey': range_key,
                     }
                     current_entity_id = entity_id
 
@@ -71,6 +75,7 @@ class EntityRepository:
                                 'revenueModel': entity.revenueModel,
                                 'createdAt': entity.createdAt,
                                 'industries': entity.industries,
+                                'forSuggestionGeneration': entity.forSuggestionGeneration,
                             }
                         )
                     elif range_key == 'STARTUP#CONTACTS':
@@ -99,6 +104,7 @@ class EntityRepository:
                                 'investmentAmount': entity.investmentAmount,
                                 'startupStagePreference': entity.startupStagePreference,
                                 'preferredBusinessModels': entity.preferredBusinessModels,
+                                'forSuggestionGeneration': entity.forSuggestionGeneration,
                             }
                         )
 
@@ -115,19 +121,19 @@ class EntityRepository:
                 entity_schema = EntitySchema(**current_entity)
                 processed_entities.append(entity_schema)
 
-            return HTTPStatus.OK, processed_entities, 'Success'
+            return HTTPStatus.OK, processed_entities, entity_list, 'Success'
 
         except ScanError as e:
             self.logger.error(f'Error scanning DynamoDB: {e}')
-            return HTTPStatus.INTERNAL_SERVER_ERROR, [], str(e)
+            return HTTPStatus.INTERNAL_SERVER_ERROR, [], [], str(e)
 
         except PynamoDBConnectionError as e:
             self.logger.error(f'Error connecting to DynamoDB: {e}')
-            return HTTPStatus.INTERNAL_SERVER_ERROR, [], str(e)
+            return HTTPStatus.INTERNAL_SERVER_ERROR, [], [], str(e)
 
         except TableDoesNotExist as e:
             self.logger.error(f'Table does not exist: {e}')
-            return HTTPStatus.INTERNAL_SERVER_ERROR, [], str(e)
+            return HTTPStatus.INTERNAL_SERVER_ERROR, [], [], str(e)
 
     def batch_get_entities(
         self, item_keys: List[Tuple[str, str]]
@@ -230,3 +236,44 @@ class EntityRepository:
         except TableDoesNotExist as e:
             self.logger.error(f'Table does not exist: {e}')
             return HTTPStatus.INTERNAL_SERVER_ERROR, [], str(e)
+
+    def update_entity_for_suggestion_generation(
+        self, entity_list: List[Entity], update_value: bool
+    ) -> Tuple[HTTPStatus, str]:
+        """Update the entity for suggestion generation.
+
+        :param entity_list: The list of entities to update
+        :param update_value: The value to update the entity for suggestion generation to
+        :type entity_list: List[Entity]
+        :type update_value: bool
+
+        :return: Tuple containing HTTP status and a message
+        :rtype: Tuple[HTTPStatus, str]
+        """
+        try:
+            self.logger.info(f'Updating entity for suggestion generation: {entity_list}')
+            with Entity.batch_write() as batch:
+                for entity in entity_list:
+                    if 'METADATA' not in entity.rangeKey:
+                        continue
+
+                    entity.forSuggestionGeneration = update_value
+                    batch.save(entity)
+
+            return HTTPStatus.OK, 'Success'
+
+        except PutError as e:
+            self.logger.error(f'Error updating entity for suggestion generation: {e}')
+            return HTTPStatus.INTERNAL_SERVER_ERROR, str(e)
+
+        except PynamoDBConnectionError as e:
+            self.logger.error(f'Error connecting to DynamoDB: {e}')
+            return HTTPStatus.INTERNAL_SERVER_ERROR, str(e)
+
+        except TableDoesNotExist as e:
+            self.logger.error(f'Table does not exist: {e}')
+            return HTTPStatus.INTERNAL_SERVER_ERROR, str(e)
+
+        except Exception as e:
+            self.logger.error(f'Error updating entity for suggestion generation: {e}')
+            return HTTPStatus.INTERNAL_SERVER_ERROR, str(e)

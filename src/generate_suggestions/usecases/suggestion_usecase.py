@@ -33,7 +33,7 @@ class SuggestionUsecase:
         )
 
         try:
-            status, entities_available, message = self.entity_repository.get_entity_list()
+            status, entities_available, entities, message = self.entity_repository.get_entity_list()
             if status != HTTPStatus.OK:
                 self.logger.warning(
                     {
@@ -54,15 +54,33 @@ class SuggestionUsecase:
                 }
             )
 
-            entities_selected = (
-                [
-                    entity
-                    for entity in entities_available
-                    if (entity.startupId or entity.enablerId) in entity_ids_selected
-                ]
-                if entity_ids_selected
-                else entities_available
-            )
+            entities_selected = []
+            selected_entity_hash_key = []
+            for entity in entities_available:
+                is_in_selected_entity_list = (
+                    entity_ids_selected
+                    and (entity.startupId or entity.enablerId) in entity_ids_selected
+                )
+                entity_list_not_provided = not entity_ids_selected
+
+                is_add_to_entities_selected = (
+                    entity_list_not_provided or is_in_selected_entity_list
+                ) and entity.forSuggestionGeneration
+
+                if is_add_to_entities_selected:
+                    entities_selected.append(entity)
+                    selected_entity_hash_key.append(entity.hashKey)
+
+            if not entities_selected:
+                self.logger.error(
+                    {
+                        'message': 'No entities selected',
+                    }
+                )
+                return ErrorResponse(
+                    response='No entities selected',
+                    status=HTTPStatus.BAD_REQUEST,
+                )
 
             self.logger.info(
                 {
@@ -143,11 +161,31 @@ class SuggestionUsecase:
 
             final_response = SuggestionMatchList(matches=all_matches)
 
-            status, message, error = self.suggestion_repository.save_suggestions(final_response)
+            status, message = self.suggestion_repository.save_suggestions(final_response)
             if status != HTTPStatus.OK:
-                self.logger.warning({'message': 'Failed to save suggestions', 'error': error})
+                self.logger.warning({'message': 'Failed to save suggestions', 'error': message})
                 return ErrorResponse(
-                    response=error,
+                    response=message,
+                    status=status,
+                )
+
+            entity_models_selected = []
+            for entity_model in entities:
+                if entity_model.hashKey and entity_model.hashKey in selected_entity_hash_key:
+                    entity_models_selected.append(entity_model)
+
+            status, message = self.entity_repository.update_entity_for_suggestion_generation(
+                entity_list=entity_models_selected, update_value=False
+            )
+            if status != HTTPStatus.OK:
+                self.logger.error(
+                    {
+                        'message': 'Failed to update entity for suggestion generation',
+                        'error': message,
+                    }
+                )
+                return ErrorResponse(
+                    response=message,
                     status=status,
                 )
 
