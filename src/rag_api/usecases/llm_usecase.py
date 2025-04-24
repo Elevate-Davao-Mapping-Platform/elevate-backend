@@ -148,7 +148,7 @@ class LLMUsecase:
         user_id = chat_in.userId
         vector_retrieval_chunks = self.knowledge_base_usecase.get_knowledge_base_data(prompt)
 
-        _, entities, _ = self.entity_repository.get_entity_list()
+        _, entities, _, _ = self.entity_repository.get_entity_list()
         user_entity = None
         other_entities = []
         for entity in entities:

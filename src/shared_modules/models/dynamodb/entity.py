@@ -82,7 +82,7 @@ class Entity(Model):
     location = Location(null=True)
     createdAt = UnicodeAttribute(null=True)
     updatedAt = UnicodeAttribute(null=True)
-    contacts = ListAttribute(of=Contact)
+    contacts = ListAttribute(of=Contact, null=True)
 
     # Startup-specific attributes
     startUpName = UnicodeAttribute(null=True)
@@ -112,9 +112,11 @@ class Entity(Model):
     savedProfileType = UnicodeAttribute(null=True)
 
     # Suggestion Attributes
-    suggestionId = UnicodeAttribute(null=False)
-    certainty = NumberAttribute(null=False)
-    rationale = UnicodeAttribute(null=False)
-    matchPairId = UnicodeAttribute(null=False)
-    matchPairType = UnicodeAttribute(null=False)
-    matchPairName = UnicodeAttribute(null=False)
+    suggestionId = UnicodeAttribute(null=True)
+    certainty = NumberAttribute(null=True)
+    rationale = UnicodeAttribute(null=True)
+    matchPairId = UnicodeAttribute(null=True)
+    matchPairType = UnicodeAttribute(null=True)
+    matchPairName = UnicodeAttribute(null=True)
+
+    forSuggestionGeneration = BooleanAttribute(null=True)

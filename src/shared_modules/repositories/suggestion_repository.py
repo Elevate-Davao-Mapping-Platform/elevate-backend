@@ -66,7 +66,7 @@ class SuggestionRepository:
             self.logger.error(error_msg)
             return HTTPStatus.INTERNAL_SERVER_ERROR, None, None, error_msg
 
-    def save_suggestions(self, suggestion_list: SuggestionMatchList) -> Tuple[HTTPStatus, str, str]:
+    def save_suggestions(self, suggestion_list: SuggestionMatchList) -> Tuple[HTTPStatus, str]:
         """
         Save suggestion matches using batch write operation.
 
@@ -109,9 +109,9 @@ class SuggestionRepository:
                         )
                         batch.save(suggestion)
 
-            return HTTPStatus.OK, 'Suggestions saved successfully', None
+            return HTTPStatus.OK, 'Suggestions saved successfully'
 
         except (PynamoDBConnectionError, TableDoesNotExist) as e:
             error_msg = f'Failed to save suggestions: {str(e)}'
             self.logger.error(error_msg)
-            return HTTPStatus.INTERNAL_SERVER_ERROR, None, error_msg
+            return HTTPStatus.INTERNAL_SERVER_ERROR, error_msg
