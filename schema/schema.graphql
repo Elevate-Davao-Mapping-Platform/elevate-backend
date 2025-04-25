@@ -332,7 +332,7 @@ type Mutation {
     @aws_api_key
   saveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
   unsaveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
-    requestNameChange(input: RequestNameChangeInput!): MutationResponse! @aws_api_key
+  requestNameChange(input: RequestNameChangeInput!): MutationResponse! @aws_api_key
 }
 
 type Subscription {
