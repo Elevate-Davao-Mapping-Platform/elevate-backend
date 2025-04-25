@@ -405,11 +405,20 @@ class AppsyncAPI(Construct):
         """Sets up DynamoDB data source and resolvers for entity list functionality."""
         folder_root = './infra/appsync/appsync_js/admin'
 
-        query_entity_list_js = f'{folder_root}/requestNameChange.js'
+        request_name_change_js = f'{folder_root}/requestNameChange.js'
         entity_table_data_source.create_resolver(
             f'{self.config.prefix}-MutationRequestNameChange',
             type_name='Mutation',
-            field_name='RequestNameChange',
-            code=appsync.Code.from_asset(query_entity_list_js),
+            field_name='requestNameChange',
+            code=appsync.Code.from_asset(request_name_change_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        get_name_change_requests_js = f'{folder_root}/getNameChangeRequests.js'
+        entity_table_data_source.create_resolver(
+            f'{self.config.prefix}-QueryGetNameChangeRequests',
+            type_name='Query',
+            field_name='getNameChangeRequests',
+            code=appsync.Code.from_asset(get_name_change_requests_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
