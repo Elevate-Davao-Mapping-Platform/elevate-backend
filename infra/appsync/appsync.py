@@ -45,6 +45,7 @@ class AppsyncAPI(Construct):
         self._setup_suggestion_resolvers(get_suggestions_lambda)
         self._setup_profile_resolvers(entity_table_data_source, get_saved_profiles_lambda)
         self._setup_analytics_resolvers(get_analytics_lambda)
+        self._setup_admin_resolvers(entity_table_data_source)
 
         # Store API outputs
         self.graphql_url = self.api.graphql_url
@@ -399,3 +400,17 @@ class AppsyncAPI(Construct):
             type_name='Query',
             field_name='getAnalytics',
         )
+    def _setup_admin_resolvers(
+            self, entity_table_data_source: appsync.DynamoDbDataSource
+        ) -> None:
+            """Sets up DynamoDB data source and resolvers for entity list functionality."""
+            folder_root = './infra/appsync/appsync_js/admin'
+
+            query_entity_list_js = f'{folder_root}/requestNameChange.js'
+            entity_table_data_source.create_resolver(
+                f'{self.config.prefix}-MutationRequestNameChange',
+                type_name='Mutation',
+                field_name='RequestNameChange',
+                code=appsync.Code.from_asset(query_entity_list_js),
+                runtime=appsync.FunctionRuntime.JS_1_0_0,
+            )
