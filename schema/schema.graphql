@@ -293,6 +293,13 @@ input SaveProfileInput {
 # ===================================
 # Root types
 # ===================================
+
+input RequestNameChangeInput {
+  entityId: String!
+  entityType: EntityType!
+  newName: String!
+}
+
 type Query {
   getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
   getChats(chatTopicId: String!, userId: String!): [Chat!] @aws_api_key
@@ -315,6 +322,8 @@ type Mutation {
     @aws_api_key
   saveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
   unsaveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
+    RequestNameChange(input: RequestNameChangeInput!): MutationResponse!
+    @aws_api_key
 }
 
 type Subscription {
