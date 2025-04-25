@@ -21,6 +21,20 @@ export function request(ctx) {
         industries: '#industries'
     };
 
+    const forSuggestionGenerationChangedFields =[
+        'description',
+        'startupStage',
+        'revenueModel',
+        'location',
+        'industries',
+        'founders',
+        'milestones',
+    ]
+    const forSuggestionGenerationChanged = forSuggestionGenerationChangedFields.some(field => ctx.args.input[field] !== undefined);
+    updateExpression.push('#forSuggestionGeneration = :forSuggestionGeneration');
+    expressionValues[`:forSuggestionGeneration`] = forSuggestionGenerationChanged;
+    expressionNames[`#forSuggestionGeneration`] = 'forSuggestionGeneration';
+
     for (const [field, placeholder] of Object.entries(fields)) {
         if (ctx.args.input[field] !== undefined) {
             updateExpression.push(`${placeholder} = :${field}`);
