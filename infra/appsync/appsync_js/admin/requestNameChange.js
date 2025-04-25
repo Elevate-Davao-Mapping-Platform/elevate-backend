@@ -3,7 +3,7 @@ import { util } from '@aws-appsync/utils'
 export function request(ctx) {
   const { entityId, entityType, newName } = ctx.args.input
 
-  const requestId = util.autoId() // KSUID-style ID
+  const requestId = util.autoKsuid() 
   const timestamp = util.time.nowISO8601()
 
   return {
@@ -17,7 +17,6 @@ export function request(ctx) {
       entityId: util.dynamodb.toDynamoDB(entityId),
       entityType: util.dynamodb.toDynamoDB(entityType),
       newName: util.dynamodb.toDynamoDB(newName),
-      originalName: util.dynamodb.toDynamoDB(''), // optional, update if known
       isApproved: util.dynamodb.toDynamoDB(false),
       requestType: util.dynamodb.toDynamoDB('NAME_CHANGE'),
       createdAt: util.dynamodb.toDynamoDB(timestamp),
@@ -27,6 +26,13 @@ export function request(ctx) {
 }
 
 export function response(ctx) {
+    if (ctx.error) {
+      return {
+        id: null,
+        message: ctx.error.message,
+        success: false
+      };
+    }
   return {
     success: true,
     message: 'Name change request submitted successfully.'
