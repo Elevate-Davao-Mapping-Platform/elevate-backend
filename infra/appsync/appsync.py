@@ -339,24 +339,10 @@ class AppsyncAPI(Construct):
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
-    # def _setup_entity_list_resolvers(
-    #     self, entity_table_data_source: appsync.DynamoDbDataSource
-    # ) -> None:
-    #     """Sets up DynamoDB data source and resolvers for entity list functionality."""
-    #     folder_root = './infra/appsync/appsync_js/entities'
-
-    #     query_entity_list_js = f'{folder_root}/getMapList.js'
-    #     entity_table_data_source.create_resolver(
-    #         f'{self.config.prefix}-QueryGetEntityListResolver',
-    #         type_name='Query',
-    #         field_name='getMapList',
-    #         code=appsync.Code.from_asset(query_entity_list_js),
-    #         runtime=appsync.FunctionRuntime.JS_1_0_0,
-    #     )
-    
     def _setup_entity_list_resolvers(
         self, entity_table_data_source: appsync.DynamoDbDataSource
     ) -> None:
+        """Sets up DynamoDB data source and resolvers for entity list functionality."""
         folder_root = './infra/appsync/appsync_js/entities'
 
         # Existing getMapList resolver
