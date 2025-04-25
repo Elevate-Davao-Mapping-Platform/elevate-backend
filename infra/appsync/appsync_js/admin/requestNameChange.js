@@ -9,8 +9,8 @@ export function request(ctx) {
   return {
     operation: 'PutItem',
     key: {
-      PK: util.dynamodb.toDynamoDB(`${entityType}#${entityId}`),
-      SK: util.dynamodb.toDynamoDB(`REQUEST#NAME_CHANGE#${requestId}`)
+      hashKey: util.dynamodb.toDynamoDB(`${entityType}#${entityId}`),
+      rangeKey: util.dynamodb.toDynamoDB(`REQUEST#NAME_CHANGE#${requestId}`)
     },
     attributeValues: {
       requestId: util.dynamodb.toDynamoDB(requestId),
