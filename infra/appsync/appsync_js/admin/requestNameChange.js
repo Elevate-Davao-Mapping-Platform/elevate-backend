@@ -3,7 +3,7 @@ import { util } from '@aws-appsync/utils'
 export function request(ctx) {
   const { entityId, entityType, newName } = ctx.args.input
 
-  const requestId = util.autoKsuid() 
+  const requestId = util.autoKsuid()
   const timestamp = util.time.nowISO8601()
 
   return {
