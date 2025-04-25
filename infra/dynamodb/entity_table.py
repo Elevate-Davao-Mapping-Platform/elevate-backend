@@ -28,5 +28,11 @@ class EntityTable(Construct):
             projection_type=dynamodb.ProjectionType.ALL,
             sort_key=dynamodb.Attribute(name='rangeKey', type=dynamodb.AttributeType.STRING),
         )
+        self.entity_table.add_global_secondary_index(
+            index_name='GSI2PK',
+            partition_key=dynamodb.Attribute(name='GSI2PK', type=dynamodb.AttributeType.STRING),
+            projection_type=dynamodb.ProjectionType.ALL,
+            sort_key=dynamodb.Attribute(name='rangeKey', type=dynamodb.AttributeType.STRING),
+        )
 
         self.table_arn = self.entity_table.table_arn

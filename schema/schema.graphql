@@ -280,6 +280,14 @@ type Analytics {
   topInvestorRecommendations: [InvestorRecommendation]
 }
 
+type NameChangeRequest {
+  requestId: String!
+  entityId: String!
+  entityType: EntityType!
+  newName: String!
+  originalName: String!
+}
+
 # ===================================
 # Profile related types
 # ===================================
@@ -298,6 +306,7 @@ input RequestNameChangeInput {
   entityId: String!
   entityType: EntityType!
   newName: String!
+  originalName: String
 }
 
 type Query {
@@ -309,6 +318,7 @@ type Query {
   getSuggestions(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
   getAnalytics(entityType: EntityType!, entityId: String!): Analytics! @aws_api_key
   getSavedProfiles(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
+  getNameChangeRequests: [NameChangeRequest!]! @aws_api_key
 }
 
 type Mutation {
@@ -322,8 +332,7 @@ type Mutation {
     @aws_api_key
   saveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
   unsaveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
-    RequestNameChange(input: RequestNameChangeInput!): MutationResponse!
-    @aws_api_key
+    requestNameChange(input: RequestNameChangeInput!): MutationResponse! @aws_api_key
 }
 
 type Subscription {
