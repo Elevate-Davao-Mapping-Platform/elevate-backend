@@ -27,6 +27,23 @@ export function request(ctx) {
         enablerName: '#enablerName'
     };
 
+    const forSuggestionGenerationChangedFields =[
+        'description',
+        'industryFocus',
+        'supportType',
+        'fundingStageFocus',
+        'investmentAmount',
+        'startupStagePreference',
+        'preferredBusinessModels',
+        'investmentCriteria',
+        'portfolio'
+    ]
+
+    const forSuggestionGenerationChanged = forSuggestionGenerationChangedFields.some(field => ctx.args.input[field] !== undefined);
+    updateExpression.push('#forSuggestionGeneration = :forSuggestionGeneration');
+    expressionValues[`:forSuggestionGeneration`] = forSuggestionGenerationChanged;
+    expressionNames[`#forSuggestionGeneration`] = 'forSuggestionGeneration';
+
     for (const [field, placeholder] of Object.entries(fields)) {
         if (ctx.args.input[field] !== undefined) {
             updateExpression.push(`${placeholder} = :${field}`);

@@ -23,6 +23,7 @@ export function request(ctx) {
             revenueModel: ctx.args.input.revenueModel,
             location: ctx.args.input.location,
             industries: ctx.args.input.industries,
+            forSuggestionGeneration: true,
             GSI1PK: ksuid,
             createdAt,
         })

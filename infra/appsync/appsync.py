@@ -30,10 +30,17 @@ class AppsyncAPI(Construct):
 
         # Set up data sources and resolvers
         entity_table_data_source = self._setup_entity_table_data_source(entity_table)
+
+        # Create a Lambda data source for the suggestions cron
+        suggestions_cron_ds = self.api.add_lambda_data_source(
+            f'{self.config.prefix}-suggestions-cron-data-source',
+            suggestions_cron_lambda,
+        )
+
         self._setup_llm_resolvers(llm_rag_api)
         self._setup_chat_resolvers(entity_table_data_source)
-        self._setup_startup_resolvers(entity_table_data_source, suggestions_cron_lambda)
-        self._setup_enabler_resolvers(entity_table_data_source)
+        self._setup_startup_resolvers(entity_table_data_source, suggestions_cron_ds)
+        self._setup_enabler_resolvers(entity_table_data_source, suggestions_cron_ds)
         self._setup_entity_list_resolvers(entity_table_data_source)
         self._setup_suggestion_resolvers(get_suggestions_lambda)
         self._setup_profile_resolvers(entity_table_data_source, get_saved_profiles_lambda)
@@ -152,28 +159,29 @@ class AppsyncAPI(Construct):
     def _setup_startup_resolvers(
         self,
         entity_table_data_source: appsync.DynamoDbDataSource,
-        suggestions_cron_lambda: lambda_.Function,
+        suggestions_cron_ds: appsync.LambdaDataSource,
     ) -> None:
         """Sets up DynamoDB data source and resolvers for startup functionality."""
         folder_root = './infra/appsync/appsync_js/startups'
 
-        # Create a Lambda data source for the suggestions cron
-        suggestions_cron_ds = self.api.add_lambda_data_source(
-            f'{self.config.prefix}-suggestions-cron-data-source',
-            suggestions_cron_lambda,
+        create_startup_js = f'{folder_root}/createStartup.js'
+        entity_table_data_source.create_resolver(
+            f'{self.config.prefix}-MutationCreateStartupResolver',
+            type_name='Mutation',
+            field_name='createStartup',
+            code=appsync.Code.from_asset(create_startup_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
-        # Create the pipeline resolver for createStartup
-        create_startup_js = f'{folder_root}/createStartup.js'
-
         # Create the functions that will be part of the pipeline
-        create_startup_function = appsync.AppsyncFunction(
+        update_startup_js = f'{folder_root}/updateStartup.js'
+        update_startup_function = appsync.AppsyncFunction(
             self,
-            f'{self.config.prefix}-CreateStartupFunction',
-            name=f'{self.config.prefix_no_symbols}CreateStartupFunction',
+            f'{self.config.prefix}-UpdateStartupFunction',
+            name=f'{self.config.prefix_no_symbols}UpdateStartupFunction',
             api=self.api,
             data_source=entity_table_data_source,
-            code=appsync.Code.from_asset(create_startup_js),
+            code=appsync.Code.from_asset(update_startup_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
@@ -203,9 +211,9 @@ class AppsyncAPI(Construct):
 
         # Create the pipeline resolver
         self.api.create_resolver(
-            f'{self.config.prefix}-MutationCreateStartupResolver',
+            f'{self.config.prefix}-MutationUpdateStartupResolver',
             type_name='Mutation',
-            field_name='createStartup',
+            field_name='updateStartup',
             code=appsync.Code.from_inline(
                 """
                 export function request(ctx) {
@@ -218,16 +226,7 @@ class AppsyncAPI(Construct):
             """
             ),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
-            pipeline_config=[create_startup_function, trigger_suggestions_function],
-        )
-
-        update_startup_js = f'{folder_root}/updateStartup.js'
-        entity_table_data_source.create_resolver(
-            f'{self.config.prefix}-MutationUpdateStartupResolver',
-            type_name='Mutation',
-            field_name='updateStartup',
-            code=appsync.Code.from_asset(update_startup_js),
-            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            pipeline_config=[update_startup_function, trigger_suggestions_function],
         )
 
         query_startup_js = f'{folder_root}/getStartupProfile.js'
@@ -240,7 +239,9 @@ class AppsyncAPI(Construct):
         )
 
     def _setup_enabler_resolvers(
-        self, entity_table_data_source: appsync.DynamoDbDataSource
+        self,
+        entity_table_data_source: appsync.DynamoDbDataSource,
+        suggestions_cron_ds: appsync.LambdaDataSource,
     ) -> None:
         """Sets up DynamoDB data source and resolvers for enabler functionality."""
         folder_root = './infra/appsync/appsync_js/enablers'
@@ -254,13 +255,60 @@ class AppsyncAPI(Construct):
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
+        # Create the functions that will be part of the pipeline
         update_enabler_js = f'{folder_root}/updateEnabler.js'
-        entity_table_data_source.create_resolver(
+        update_enabler_function = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-UpdateEnablerFunction',
+            name=f'{self.config.prefix_no_symbols}UpdateEnablerFunction',
+            api=self.api,
+            data_source=entity_table_data_source,
+            code=appsync.Code.from_asset(update_enabler_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        trigger_suggestions_function = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-TriggerEnablerSuggestionsFunction',
+            name=f'{self.config.prefix_no_symbols}TriggerEnablerSuggestionsFunction',
+            api=self.api,
+            data_source=suggestions_cron_ds,
+            code=appsync.Code.from_inline(
+                """
+                export function request(ctx) {
+                    return {
+                        operation: "Invoke",
+                        invocationType: "Event",
+                        payload: ctx,
+                    };
+                }
+
+                export function response(ctx) {
+                    return ctx.prev.result;
+                }
+                """
+            ),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+        )
+
+        # Create the pipeline resolver
+        self.api.create_resolver(
             f'{self.config.prefix}-MutationUpdateEnablerResolver',
             type_name='Mutation',
             field_name='updateEnabler',
-            code=appsync.Code.from_asset(update_enabler_js),
+            code=appsync.Code.from_inline(
+                """
+                export function request(ctx) {
+                    return ctx.args;
+                }
+
+                export function response(ctx) {
+                    return ctx.prev.result;
+                }
+                """
+            ),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
+            pipeline_config=[update_enabler_function, trigger_suggestions_function],
         )
 
         query_enabler_js = f'{folder_root}/getEnablerProfile.js'

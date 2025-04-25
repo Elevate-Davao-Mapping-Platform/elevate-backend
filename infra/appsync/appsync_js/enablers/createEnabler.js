@@ -28,6 +28,7 @@ export function request(ctx) {
             investmentAmount: ctx.args.input.investmentAmount,
             startupStagePreference: ctx.args.input.startupStagePreference,
             preferredBusinessModels: ctx.args.input.preferredBusinessModels,
+            forSuggestionGeneration: true,
             GSI1PK: ksuid,
             createdAt,
         })
