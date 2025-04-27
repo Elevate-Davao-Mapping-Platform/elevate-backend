@@ -1,139 +1,136 @@
-import { util } from '@aws-appsync/utils';
+import { util } from "@aws-appsync/utils";
 
 /**
- * AppSync JS resolver for getMapListAdmin
- * This scans all entities and returns metadata, location, visibility, and request placeholders
- */
-
-/**
- * Queries DynamoDB table for entities (startups or enablers) and name change requests
+ * Queries DynamoDB table for entities (startups or enablers)
  * @param {import('@aws-appsync/utils').Context} ctx the context
  * @returns {import('@aws-appsync/utils').DynamoDBQueryRequest} the request
  */
 export function request(ctx) {
-  return {
-    operation: 'Scan',
-    index: 'GSI1PK',
-  };
+    const { filterEntityType } = ctx.arguments;
+
+    return {
+        operation: "Scan",
+        index: "GSI1PK",
+        ...(filterEntityType && {
+            filter: {
+                expression: "begins_with(rangeKey, :filterEntityType)",
+                expressionValues: {
+                    ":filterEntityType": util.dynamodb.toDynamoDB(`${filterEntityType}#`)
+                }
+            }
+        })
+    };
 }
 
 /**
- * Returns the query items with the specified format
+ * Returns the query items
  * @param {import('@aws-appsync/utils').Context} ctx the context
- * @returns {Object} formatted response with entities, counts, and request list
+ * @returns {[*]} a flat list of result items
  */
 export function response(ctx) {
-  if (ctx.error) {
-    util.error(ctx.error.message, ctx.error.type);
-  }
+    if (ctx.error) {
+        util.error(ctx.error.message, ctx.error.type);
+    }
 
-  const { items } = ctx.result;
-  const entityMap = {};
-  const requestList = [];
-  let startupLength = 0;
-  let enablersLength = 0;
-  let pendingRequestsLen = 0;
+    const { entityId, entityType } = ctx.arguments;
 
-  items.forEach(item => {
-    if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
-        console.log('metadata here')
-        const [entityType, entityId] = item.hashKey.split('#');
+    const { items } = ctx.result;
+    const entityMap = {};
+    const savedProfiles = {}; // Track saved profiles using an object instead of Set
 
-        if(!entityId) {
-          console.log('EntityId is null or undefined')
-          console.log(item)
-         }
+    // First pass: collect all items for each entity
+    items.forEach(item => {
+        const [itemEntityType, itemEntityId] = item.hashKey.split('#');
 
-        if(!entityType) {
-          console.log('EntityId is null or undefined')
+        // Check if this is a saved profile entry for the current user
+        if (entityId && entityType &&
+            item.hashKey === `${entityType}#${entityId}` &&
+            item.rangeKey.includes('SAVED_PROFILE')) {
+            // Extract the saved profile ID from rangeKey (format: ENTITY_TYPE#SAVED_PROFILE#PROFILE_TYPE#PROFILE_ID)
+            const savedProfileId = item.rangeKey.split('#')[3];
+            savedProfiles[savedProfileId] = true; // Use object property instead of Set.add()
         }
 
-        if (!entityMap[entityId]) {
-          entityMap[entityId] = {
-            id: entityId,
-            type: entityType,
-          }
+        if (!entityMap[itemEntityId]) {
+            entityMap[itemEntityId] = {
+                entityType: itemEntityType,
+                items: []
+            };
         }
-    }
-  });
+        entityMap[itemEntityId].items.push(item);
+    });
 
-  // Process items sequentially
-  items.forEach(item => {
-    // Handle name change requests
-    if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
-      const [entityType, entityId] = item.hashKey.split('#');
-
-      if(!entityId) {
-          console.log('EntityId is null or undefined')
-      }
-
-      if(!entityType) {
-          console.log('EntityId is null or undefined')
-      }
-
-      requestList.push({
-        requestId: item.requestId,
-        requestType: item.requestType,
-        entityId: entityId,
-        entityType: entityType,
-        originalName: item.originalName,
-        newName: item.newName,
-        isApproved: item.isApproved,
-        updatedAt: item.updatedAt
-      });
-
-      pendingRequestsLen = pendingRequestsLen + 1;
-
-      const nameChangeRequestStatus = item.isApproved === null ? 'PENDING' : item.isApproved === true ? 'APPROVED' : 'REJECTED';
-      entityMap[entityId].nameChangeRequestStatus = nameChangeRequestStatus;
-    }
-
-    // Handle entity metadata
-    if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
-      const entityId = item.hashKey.split('#')[1];
-
-      if(!entityId) {
-          console.log('EntityId is null or undefined')
-      }
-
-      if (item.rangeKey === 'STARTUP#METADATA') {
-        entityMap[entityId].name = item.startUpName || '';
-        entityMap[entityId].logoObjectKey = item.logoObjectKey || '';
-        entityMap[entityId].dateFounded = item.dateFounded || '';
-        entityMap[entityId].industries = item.industries || [];
-        entityMap[entityId].description = item.description || '';
-        entityMap[entityId].location = item.location || {
-          address: '',
-          latlng: { lat: 0, lng: 0 }
+    // Second pass: process each entity's items
+    const entities = [];
+    Object.entries(entityMap).forEach(([itemEntityId, { entityType: itemEntityType, items }]) => {
+        const entity = {
+            [itemEntityType === 'STARTUP' ? 'startupId' : 'enablerId']: itemEntityId,
+            __typename: itemEntityType === 'STARTUP' ? 'Startup' : 'Enabler',
+            isSaved: savedProfiles[itemEntityId] === true // Check if profile exists in object
         };
-        entityMap[entityId].visibility = item.visibility ?? true;
-        startupLength = startupLength + 1;
-      }
 
-      if (item.rangeKey === 'ENABLER#METADATA') {
-        entityMap[entityId].name = item.enablerName || '';
-        entityMap[entityId].logoObjectKey = item.logoObjectKey || '';
-        entityMap[entityId].dateFounded = item.dateFounded || '';
-        entityMap[entityId].industries = item.industryFocus || [];
-        entityMap[entityId].description = item.description || '';
-        entityMap[entityId].location = item.location || {
-          address: '',
-          latlng: { lat: 0, lng: 0 }
-        };
-        entityMap[entityId].visibility = item.visibility ?? true;
-        enablersLength = enablersLength + 1;
-      }
-    }
-  });
+        // Process all items for this entity
+        items.forEach(item => {
+            if (itemEntityType === 'STARTUP') {
+                switch (item.rangeKey) {
+                    case 'STARTUP#METADATA':
+                        Object.assign(entity, {
+                            startUpName: item.startUpName,
+                            email: item.email,
+                            logoObjectKey: item.logoObjectKey,
+                            dateFounded: item.dateFounded,
+                            startupStage: item.startupStage,
+                            description: item.description,
+                            location: item.location,
+                            revenueModel: item.revenueModel,
+                            createdAt: item.createdAt,
+                            industries: item.industries
+                        });
+                        break;
+                    case 'STARTUP#CONTACTS':
+                        entity.contacts = item.contacts || [];
+                        break;
+                    case 'STARTUP#MILESTONES':
+                        entity.milestones = item.milestones;
+                        break;
+                    case 'STARTUP#FOUNDERS':
+                        entity.founders = item.founders;
+                        break;
+                }
+            } else if (itemEntityType === 'ENABLER') {
+                switch (item.rangeKey) {
+                    case 'ENABLER#METADATA':
+                        Object.assign(entity, {
+                            enablerName: item.enablerName,
+                            email: item.email,
+                            logoObjectKey: item.logoObjectKey,
+                            dateFounded: item.dateFounded,
+                            organizationType: item.organizationType,
+                            description: item.description,
+                            location: item.location,
+                            industryFocus: item.industryFocus,
+                            supportType: item.supportType,
+                            fundingStageFocus: item.fundingStageFocus,
+                            investmentAmount: item.investmentAmount,
+                            startupStagePreference: item.startupStagePreference,
+                            preferredBusinessModels: item.preferredBusinessModels
+                        });
+                        break;
+                    case 'ENABLER#CONTACTS':
+                        entity.contacts = item.contacts || [];
+                        break;
+                    case 'ENABLER#INVESTMENT_CRITERIA':
+                        entity.investmentCriteria = item.investmentCriteria;
+                        break;
+                    case 'ENABLER#PORTFOLIO':
+                        entity.portfolio = item.portfolio;
+                        break;
+                }
+            }
+        });
 
-  // Convert entity map to array
-  const mapListArray = Object.values(entityMap);
+        entities.push(entity);
+    });
 
-  return {
-    mapList: mapListArray,
-    requestList,
-    startupLength,
-    enablersLength,
-    pendingRequestsLen
-  };
+    return entities;
 }
