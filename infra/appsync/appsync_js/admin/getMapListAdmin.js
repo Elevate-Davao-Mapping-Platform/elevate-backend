@@ -84,31 +84,22 @@ export function response(ctx) {
 
       if (item.rangeKey === 'STARTUP#METADATA') {
         entityMap[entityId].name = item.startUpName || '';
-        entityMap[entityId].logoObjectKey = item.logoObjectKey || '';
-        entityMap[entityId].dateFounded = item.dateFounded || '';
-        entityMap[entityId].industries = item.industries || [];
-        entityMap[entityId].description = item.description || '';
-        entityMap[entityId].location = item.location || {
-          address: '',
-          latlng: { lat: 0, lng: 0 }
-        };
-        entityMap[entityId].visibility = item.visibility ?? true;
-        startupLength = startupLength + 1;
       }
 
       if (item.rangeKey === 'ENABLER#METADATA') {
         entityMap[entityId].name = item.enablerName || '';
-        entityMap[entityId].logoObjectKey = item.logoObjectKey || '';
-        entityMap[entityId].dateFounded = item.dateFounded || '';
-        entityMap[entityId].industries = item.industryFocus || [];
-        entityMap[entityId].description = item.description || '';
-        entityMap[entityId].location = item.location || {
-          address: '',
-          latlng: { lat: 0, lng: 0 }
-        };
-        entityMap[entityId].visibility = item.visibility ?? true;
-        enablersLength = enablersLength + 1;
       }
+
+      entityMap[entityId].logoObjectKey = item.logoObjectKey || '';
+      entityMap[entityId].dateFounded = item.dateFounded || '';
+      entityMap[entityId].industries = item.industries || [];
+      entityMap[entityId].description = item.description || '';
+      entityMap[entityId].location = item.location || {
+        address: '',
+        latlng: { lat: 0, lng: 0 }
+      };
+      entityMap[entityId].visibility = item.visibility ?? true;
+      startupLength = startupLength + 1;
     }
   });
 
