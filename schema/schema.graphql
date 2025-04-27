@@ -286,6 +286,7 @@ type NameChangeRequest {
   entityType: EntityType!
   newName: String!
   originalName: String!
+  isApproved: Boolean
 }
 
 # ===================================
@@ -307,6 +308,13 @@ input RequestNameChangeInput {
   entityType: EntityType!
   newName: String!
   originalName: String
+}
+
+input RespondNameChangeInput {
+  entityId: String!
+  entityType: EntityType!
+  requestId: String!
+  isApproved: Boolean!
 }
 
 type Query {
@@ -333,6 +341,7 @@ type Mutation {
   saveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
   unsaveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
   requestNameChange(input: RequestNameChangeInput!): MutationResponse! @aws_api_key
+  respondNameChange(input: RespondNameChangeInput!): MutationResponse! @aws_api_key
 }
 
 type Subscription {
