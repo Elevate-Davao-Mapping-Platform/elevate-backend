@@ -38,16 +38,16 @@ export function response(ctx) {
     if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
         console.log('metadata here')
         const [entityType, entityId] = item.hashKey.split('#');
-        
+
         if(!entityId) {
           console.log('EntityId is null or undefined')
           console.log(item)
          }
-      
+
         if(!entityType) {
           console.log('EntityId is null or undefined')
         }
-    
+
         if (!entityMap[entityId]) {
           entityMap[entityId] = {
             id: entityId,
@@ -62,11 +62,11 @@ export function response(ctx) {
     // Handle name change requests
     if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
       const [entityType, entityId] = item.hashKey.split('#');
-      
+
       if(!entityId) {
           console.log('EntityId is null or undefined')
       }
-      
+
       if(!entityType) {
           console.log('EntityId is null or undefined')
       }
@@ -91,7 +91,7 @@ export function response(ctx) {
     // Handle entity metadata
     if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
       const entityId = item.hashKey.split('#')[1];
-      
+
       if(!entityId) {
           console.log('EntityId is null or undefined')
       }
