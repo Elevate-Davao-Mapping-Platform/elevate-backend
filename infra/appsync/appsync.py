@@ -337,17 +337,6 @@ class AppsyncAPI(Construct):
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
-        # New getMapListAdmin resolver
-        query_admin_entity_list_js = f'{folder_root}/getMapListAdmin.js'
-        entity_table_data_source.create_resolver(
-            f'{self.config.prefix}-QueryGetMapListAdminResolver',
-            type_name='Query',
-            field_name='getMapListAdmin',
-            code=appsync.Code.from_asset(query_admin_entity_list_js),
-            runtime=appsync.FunctionRuntime.JS_1_0_0,
-        )
-
-
     def _setup_suggestion_resolvers(
         self,
         get_suggestions_lambda: lambda_.Function,
@@ -468,4 +457,14 @@ class AppsyncAPI(Construct):
             code=appsync.Code.from_asset(respond_name_change_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
             pipeline_config=[get_name_change_request_fn, update_name_change_request_and_entity_fn],
+        )
+
+        # New getMapListAdmin resolver
+        query_admin_entity_list_js = f'{folder_root}/getMapListAdmin.js'
+        entity_table_data_source.create_resolver(
+            f'{self.config.prefix}-QueryGetMapListAdminResolver',
+            type_name='Query',
+            field_name='getMapListAdmin',
+            code=appsync.Code.from_asset(query_admin_entity_list_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
         )

@@ -36,40 +36,24 @@ export function response(ctx) {
 
   items.forEach(item => {
     if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
-        console.log('metadata here')
-        const [entityType, entityId] = item.hashKey.split('#');
-        
-        if(!entityId) {
-          console.log('EntityId is null or undefined')
-          console.log(item)
-         }
-      
-        if(!entityType) {
-          console.log('EntityId is null or undefined')
-        }
-    
-        if (!entityMap[entityId]) {
-          entityMap[entityId] = {
-            id: entityId,
-            type: entityType,
-          }
-        }
+      const entityId = item.hashKey.split('#')[1];
+      const entityType = item.hashKey.split('#')[0];
+
+    if (!entityMap[entityId]) {
+      entityMap[entityId] = {
+        id: entityId,
+        type: entityType,
+      }
     }
+  }
   });
 
   // Process items sequentially
   items.forEach(item => {
     // Handle name change requests
     if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
-      const [entityType, entityId] = item.hashKey.split('#');
-      
-      if(!entityId) {
-          console.log('EntityId is null or undefined')
-      }
-      
-      if(!entityType) {
-          console.log('EntityId is null or undefined')
-      }
+      const entityId = item.hashKey.split('#')[1];
+      const entityType = item.hashKey.split('#')[0];
 
       requestList.push({
         requestId: item.requestId,
@@ -85,16 +69,18 @@ export function response(ctx) {
       pendingRequestsLen = pendingRequestsLen + 1;
 
       const nameChangeRequestStatus = item.isApproved === null ? 'PENDING' : item.isApproved === true ? 'APPROVED' : 'REJECTED';
+      if (!entityMap[entityId]) {
+        entityMap[entityId] = {
+          id: entityId,
+          type: entityType,
+        };
+      }
       entityMap[entityId].nameChangeRequestStatus = nameChangeRequestStatus;
     }
 
     // Handle entity metadata
     if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
       const entityId = item.hashKey.split('#')[1];
-      
-      if(!entityId) {
-          console.log('EntityId is null or undefined')
-      }
 
       if (item.rangeKey === 'STARTUP#METADATA') {
         entityMap[entityId].name = item.startUpName || '';

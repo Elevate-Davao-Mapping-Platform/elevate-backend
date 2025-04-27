@@ -5,6 +5,7 @@ export function request(ctx) {
 
   const requestId = util.autoKsuid()
   const timestamp = util.time.nowISO8601()
+  const ksuid = util.autoKsuid()
 
   return {
     operation: 'PutItem',
@@ -22,7 +23,8 @@ export function request(ctx) {
       requestType: util.dynamodb.toDynamoDB('NAME_CHANGE'),
       createdAt: util.dynamodb.toDynamoDB(timestamp),
       updatedAt: util.dynamodb.toDynamoDB(timestamp),
-      GSI2PK: util.dynamodb.toDynamoDB(requestId)
+      GSI1PK: util.dynamodb.toDynamoDB(ksuid),
+      GSI2PK: util.dynamodb.toDynamoDB(requestId),
     }
   }
 }
