@@ -36,4 +36,4 @@ export function response(ctx) {
     isApproved: ctx.args.input.isApproved,
     newName: ctx.result.newName
   };
-} 
+}

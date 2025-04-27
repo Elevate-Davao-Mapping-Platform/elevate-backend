@@ -426,7 +426,7 @@ class AppsyncAPI(Construct):
         # # Create the pipeline resolver functions
         get_name_change_request_js = f'{folder_root}/getNameChangeRequest.js'
         update_name_change_request_and_entity_js = f'{folder_root}/updateNameChangeAndEntity.js'
-        
+
         # Create the resolver functions
         get_name_change_request_fn = appsync.AppsyncFunction(
             self,
@@ -437,7 +437,7 @@ class AppsyncAPI(Construct):
             data_source=entity_table_data_source,
             api=self.api,
         )
-        
+
         update_name_change_request_and_entity_fn = appsync.AppsyncFunction(
             self,
             f'{self.config.prefix}-UpdateNameChangeRequestAndEntityFunction',
@@ -447,7 +447,7 @@ class AppsyncAPI(Construct):
             data_source=entity_table_data_source,
             api=self.api,
         )
-        
+
         respond_name_change_js = f'{folder_root}/respondNameChange.js'
         self.api.create_resolver(
             f'{self.config.prefix}-MutationRespondNameChange',
