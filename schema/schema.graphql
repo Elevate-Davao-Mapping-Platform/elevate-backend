@@ -280,6 +280,14 @@ type Analytics {
   topInvestorRecommendations: [InvestorRecommendation]
 }
 
+# ===================================
+# Admin related types
+# ===================================
+
+type NameChangeRequestStatus {
+  isApproved: Boolean
+}
+
 type NameChangeRequest {
   requestId: String!
   entityId: String!
@@ -287,6 +295,43 @@ type NameChangeRequest {
   newName: String!
   originalName: String!
   isApproved: Boolean
+  requestType: String!
+  updatedAt: String!
+}
+
+input RequestNameChangeInput {
+  entityId: String!
+  entityType: EntityType!
+  newName: String!
+  originalName: String
+}
+
+input RespondNameChangeInput {
+  entityId: String!
+  entityType: EntityType!
+  requestId: String!
+  isApproved: Boolean!
+}
+
+type MapListEntity {
+  id: ID!
+  type: EntityType
+  name: String
+  logoObjectKey: String
+  dateFounded: String
+  industries: [String]
+  description: String
+  location: Location
+  nameChangeRequestStatus: NameChangeRequestStatus
+  visibility: Boolean
+}
+
+type MapListAdminResponse {
+  mapList: [MapListEntity!]!
+  requestList: [NameChangeRequest!]!
+  startupLength: Int!
+  enablersLength: Int!
+  pendingRequestsLen: Int!
 }
 
 # ===================================
@@ -303,19 +348,6 @@ input SaveProfileInput {
 # Root types
 # ===================================
 
-input RequestNameChangeInput {
-  entityId: String!
-  entityType: EntityType!
-  newName: String!
-  originalName: String
-}
-
-input RespondNameChangeInput {
-  entityId: String!
-  entityType: EntityType!
-  requestId: String!
-  isApproved: Boolean!
-}
 
 type Query {
   getChatTopics(userId: String!): [ChatTopic!] @aws_api_key
@@ -327,7 +359,7 @@ type Query {
   getAnalytics(entityType: EntityType!, entityId: String!): Analytics! @aws_api_key
   getSavedProfiles(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
   getNameChangeRequests: [NameChangeRequest!]! @aws_api_key
-  getMapListAdmin: MapListAdminResponse! @aws_cognito_user_pools(cognito_groups: ["admin"])
+  getMapListAdmin: MapListAdminResponse! @aws_api_key
 }
 
 type Mutation {
@@ -348,40 +380,4 @@ type Mutation {
 type Subscription {
   onChatResponse(chatTopicId: String, userId: String): ChatOut
     @aws_subscribe(mutations: ["sendChatChunk"])
-}
-
-type NameChangeRequestStatus {
-  isApproved: Boolean
-}
-
-type MapListEntity {
-  id: ID!
-  role: String
-  name: String
-  logoObjectKey: String
-  dateFounded: String
-  industries: [String]
-  description: String
-  location: Location
-  nameChangeRequestStatus: NameChangeRequestStatus
-  visibility: Boolean
-}
-
-type NameChangeRequest {
-  requestId: String!
-  requestType: String!
-  entityId: String!
-  entityType: EntityType!
-  originalName: String!
-  newName: String!
-  isApproved: Boolean!
-  updatedAt: String!
-}
-
-type MapListAdminResponse {
-  mapList: [MapListEntity!]!
-  requestList: [NameChangeRequest!]!
-  startupLength: Int!
-  enablersLength: Int!
-  pendingRequestsLen: Int!
 }
