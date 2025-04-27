@@ -18,7 +18,7 @@ export function request(ctx) {
       entityType: util.dynamodb.toDynamoDB(entityType),
       originalName: util.dynamodb.toDynamoDB(originalName),
       newName: util.dynamodb.toDynamoDB(newName),
-      isApproved: util.dynamodb.toDynamoDB(false),
+      isApproved: util.dynamodb.toDynamoDB(null),
       requestType: util.dynamodb.toDynamoDB('NAME_CHANGE'),
       createdAt: util.dynamodb.toDynamoDB(timestamp),
       updatedAt: util.dynamodb.toDynamoDB(timestamp),

@@ -422,3 +422,38 @@ class AppsyncAPI(Construct):
             code=appsync.Code.from_asset(get_name_change_requests_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
+
+        # # Create the pipeline resolver functions
+        get_name_change_request_js = f'{folder_root}/getNameChangeRequest.js'
+        update_name_change_request_and_entity_js = f'{folder_root}/updateNameChangeAndEntity.js'
+
+        # Create the resolver functions
+        get_name_change_request_fn = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-GetNameChangeRequestFunction',
+            code=appsync.Code.from_asset(get_name_change_request_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            name=f'{self.config.prefix_no_symbols}GetNameChangeRequest',
+            data_source=entity_table_data_source,
+            api=self.api,
+        )
+
+        update_name_change_request_and_entity_fn = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-UpdateNameChangeRequestAndEntityFunction',
+            code=appsync.Code.from_asset(update_name_change_request_and_entity_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            name=f'{self.config.prefix_no_symbols}UpdateNameChangeRequestAndEntity',
+            data_source=entity_table_data_source,
+            api=self.api,
+        )
+
+        respond_name_change_js = f'{folder_root}/respondNameChange.js'
+        self.api.create_resolver(
+            f'{self.config.prefix}-MutationRespondNameChange',
+            type_name='Mutation',
+            field_name='respondNameChange',
+            code=appsync.Code.from_asset(respond_name_change_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            pipeline_config=[get_name_change_request_fn, update_name_change_request_and_entity_fn],
+        )
