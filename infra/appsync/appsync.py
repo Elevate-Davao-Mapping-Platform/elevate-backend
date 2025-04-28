@@ -6,6 +6,7 @@ from aws_cdk import aws_appsync as appsync
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_sqs as sqs
 from constructs import Construct
 
 from infra.config import Config
@@ -22,14 +23,25 @@ class AppsyncAPI(Construct):
         get_analytics_lambda: lambda_.Function = kwargs.pop('get_analytics_lambda', None)
         get_saved_profiles_lambda: lambda_.Function = kwargs.pop('get_saved_profiles_lambda', None)
         suggestions_cron_lambda: lambda_.Function = kwargs.pop('suggestions_cron_lambda', None)
+        email_queue: sqs.Queue = kwargs.pop('email_queue', None)
 
         super().__init__(scope, construct_id, **kwargs)
 
         self.config = config
-        self.api = self._create_api(cognito_user_pool, entity_table)
+        self.api = self._create_api(cognito_user_pool, entity_table, email_queue)
 
         # Set up data sources and resolvers
         entity_table_data_source = self._setup_entity_table_data_source(entity_table)
+        sqs_data_source = self.api.add_http_data_source(
+            'sqs-data-source',
+            name=f'{self.config.prefix}-sqs-data-source',
+            endpoint='https://sqs.ap-southeast-1.amazonaws.com',
+            authorization_config=appsync.AwsIamConfig(
+                signing_region=self.config.region,
+                signing_service_name='sqs',
+            ),
+        )
+        email_queue.grant_send_messages(sqs_data_source.grant_principal)
 
         # Create a Lambda data source for the suggestions cron
         suggestions_cron_ds = self.api.add_lambda_data_source(
@@ -45,7 +57,7 @@ class AppsyncAPI(Construct):
         self._setup_suggestion_resolvers(get_suggestions_lambda)
         self._setup_profile_resolvers(entity_table_data_source, get_saved_profiles_lambda)
         self._setup_analytics_resolvers(get_analytics_lambda)
-        self._setup_admin_resolvers(entity_table_data_source)
+        self._setup_admin_resolvers(entity_table_data_source, sqs_data_source)
 
         # Store API outputs
         self.graphql_url = self.api.graphql_url
@@ -54,7 +66,10 @@ class AppsyncAPI(Construct):
         self.arn = self.api.arn
 
     def _create_api(
-        self, cognito_user_pool: cognito.UserPool, entity_table: dynamodb.Table
+        self,
+        cognito_user_pool: cognito.UserPool,
+        entity_table: dynamodb.Table,
+        email_queue: sqs.Queue,
     ) -> appsync.GraphqlApi:
         """Creates and configures the GraphQL API."""
         graphql_api_name = f'{self.config.prefix}-graphql-service'
@@ -91,6 +106,9 @@ class AppsyncAPI(Construct):
             ),
             environment_variables={
                 'TABLE_NAME': entity_table.table_name,
+                'EMAIL_QUEUE_URL': email_queue.queue_url,
+                'EMAIL_QUEUE_NAME': email_queue.queue_name,
+                'ACCOUNT_ID': self.config.account_id,
             },
         )
 
@@ -401,17 +419,68 @@ class AppsyncAPI(Construct):
             field_name='getAnalytics',
         )
 
-    def _setup_admin_resolvers(self, entity_table_data_source: appsync.DynamoDbDataSource) -> None:
+    def _setup_admin_resolvers(
+        self,
+        entity_table_data_source: appsync.DynamoDbDataSource,
+        sqs_data_source: appsync.HttpDataSource,
+    ) -> None:
         """Sets up DynamoDB data source and resolvers for entity list functionality."""
         folder_root = './infra/appsync/appsync_js/admin'
 
+        get_name_change_request_js = f'{folder_root}/getNameChangeRequestData.js'
+        get_name_change_request_fn = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-GetNameChangeRequestFunction',
+            code=appsync.Code.from_asset(get_name_change_request_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            name=f'{self.config.prefix_no_symbols}GetNameChangeRequest',
+            data_source=entity_table_data_source,
+            api=self.api,
+        )
+
         request_name_change_js = f'{folder_root}/requestNameChange.js'
-        entity_table_data_source.create_resolver(
-            f'{self.config.prefix}-MutationRequestNameChange',
-            type_name='Mutation',
-            field_name='requestNameChange',
+        request_name_change_pipeline_fn = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-RequestNameChangePipelineFunction',
             code=appsync.Code.from_asset(request_name_change_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
+            name=f'{self.config.prefix_no_symbols}RequestNameChangePipeline',
+            data_source=entity_table_data_source,
+            api=self.api,
+        )
+
+        send_name_change_request_email_js = f'{folder_root}/sendRequestReceivedEmail.js'
+        send_name_change_request_email_fn = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-SendNameChangeRequestEmailFunction',
+            code=appsync.Code.from_asset(send_name_change_request_email_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            name=f'{self.config.prefix_no_symbols}SendNameChangeRequestEmail',
+            data_source=sqs_data_source,
+            api=self.api,
+        )
+
+        self.api.create_resolver(
+            f'{self.config.prefix}-MutationRequestNameChangePipeline',
+            type_name='Mutation',
+            field_name='requestNameChange',
+            code=appsync.Code.from_inline(
+                """
+                export function request(ctx) {
+                    return ctx.args;
+                }
+
+                export function response(ctx) {
+                    return ctx.prev.result;
+                }
+                """
+            ),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            pipeline_config=[
+                get_name_change_request_fn,
+                request_name_change_pipeline_fn,
+                send_name_change_request_email_fn,
+            ],
         )
 
         get_name_change_requests_js = f'{folder_root}/getNameChangeRequests.js'
@@ -423,11 +492,8 @@ class AppsyncAPI(Construct):
             runtime=appsync.FunctionRuntime.JS_1_0_0,
         )
 
-        # # Create the pipeline resolver functions
-        get_name_change_request_js = f'{folder_root}/getNameChangeRequest.js'
-        update_name_change_request_and_entity_js = f'{folder_root}/updateNameChangeAndEntity.js'
-
         # Create the resolver functions
+        get_name_change_request_js = f'{folder_root}/getNameChangeRequest.js'
         get_name_change_request_fn = appsync.AppsyncFunction(
             self,
             f'{self.config.prefix}-GetNameChangeRequestFunction',
@@ -438,6 +504,8 @@ class AppsyncAPI(Construct):
             api=self.api,
         )
 
+        # Create the pipeline resolver functions
+        update_name_change_request_and_entity_js = f'{folder_root}/updateNameChangeAndEntity.js'
         update_name_change_request_and_entity_fn = appsync.AppsyncFunction(
             self,
             f'{self.config.prefix}-UpdateNameChangeRequestAndEntityFunction',
@@ -448,6 +516,17 @@ class AppsyncAPI(Construct):
             api=self.api,
         )
 
+        send_response_email_js = f'{folder_root}/sendResponseEmail.js'
+        send_response_email_fn = appsync.AppsyncFunction(
+            self,
+            f'{self.config.prefix}-SendResponseEmailFunction',
+            code=appsync.Code.from_asset(send_response_email_js),
+            runtime=appsync.FunctionRuntime.JS_1_0_0,
+            name=f'{self.config.prefix_no_symbols}SendResponseEmail',
+            data_source=sqs_data_source,
+            api=self.api,
+        )
+
         respond_name_change_js = f'{folder_root}/respondNameChange.js'
         self.api.create_resolver(
             f'{self.config.prefix}-MutationRespondNameChange',
@@ -455,5 +534,9 @@ class AppsyncAPI(Construct):
             field_name='respondNameChange',
             code=appsync.Code.from_asset(respond_name_change_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
-            pipeline_config=[get_name_change_request_fn, update_name_change_request_and_entity_fn],
+            pipeline_config=[
+                get_name_change_request_fn,
+                update_name_change_request_and_entity_fn,
+                send_response_email_fn,
+            ],
         )

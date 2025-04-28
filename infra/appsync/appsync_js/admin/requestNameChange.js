@@ -28,14 +28,18 @@ export function request(ctx) {
 }
 
 export function response(ctx) {
-    if (ctx.error) {
-      return {
-        id: null,
-        message: ctx.error.message,
-        success: false
-      };
-    }
+  if (ctx.error) {
+    return {
+      id: null,
+      message: ctx.error.message,
+      success: false
+    };
+  }
+
+  const { requestId } = ctx.result
+
   return {
+    id: requestId,
     success: true,
     message: 'Name change request submitted successfully.'
   }
