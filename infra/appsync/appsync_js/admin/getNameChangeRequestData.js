@@ -51,8 +51,12 @@ export function response(ctx) {
   const requestResult = results[0];
   const metadataResult = results[1];
 
+  const { id, message, success } = ctx.prev.result;
+
   return {
-    success: true,
+    id,
+    message,
+    success,
     requestId: requestResult?.requestId,
     entityId: requestResult?.entityId,
     entityType: requestResult?.entityType,

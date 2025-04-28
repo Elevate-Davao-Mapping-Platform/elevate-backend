@@ -477,8 +477,8 @@ class AppsyncAPI(Construct):
             ),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
             pipeline_config=[
-                get_name_change_request_fn,
                 request_name_change_pipeline_fn,
+                get_name_change_request_fn,
                 send_name_change_request_email_fn,
             ],
         )
@@ -490,18 +490,6 @@ class AppsyncAPI(Construct):
             field_name='getNameChangeRequests',
             code=appsync.Code.from_asset(get_name_change_requests_js),
             runtime=appsync.FunctionRuntime.JS_1_0_0,
-        )
-
-        # Create the resolver functions
-        get_name_change_request_js = f'{folder_root}/getNameChangeRequest.js'
-        get_name_change_request_fn = appsync.AppsyncFunction(
-            self,
-            f'{self.config.prefix}-GetNameChangeRequestFunction',
-            code=appsync.Code.from_asset(get_name_change_request_js),
-            runtime=appsync.FunctionRuntime.JS_1_0_0,
-            name=f'{self.config.prefix_no_symbols}GetNameChangeRequest',
-            data_source=entity_table_data_source,
-            api=self.api,
         )
 
         # Create the pipeline resolver functions
