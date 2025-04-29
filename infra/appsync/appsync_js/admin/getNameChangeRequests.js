@@ -2,17 +2,22 @@ import { util } from '@aws-appsync/utils'
 
 export function request(ctx) {
   const { isApproved } = ctx.arguments;
+  const baseRequest = {
+    operation: 'Scan',
+    index: 'GSI2PK'
+  };
+
+  if (isApproved === undefined) {
+    return baseRequest;
+  }
 
   return {
-    operation: 'Scan',
-    index: 'GSI2PK',
-    ...(isApproved && {
-      filter: {
-        expression: 'isApproved = :isApproved',
-        expressionValues: { ':isApproved': util.dynamodb.toDynamoDB(isApproved) }
-      }
-    })
-  }
+    ...baseRequest,
+    filter: {
+      expression: 'isApproved = :isApproved',
+      expressionValues: { ':isApproved': util.dynamodb.toDynamoDB(isApproved) }
+    }
+  };
 }
 
 export function response(ctx) {
@@ -21,45 +26,20 @@ export function response(ctx) {
   }
 
   const { items } = ctx.result;
-  const entityMap = {};
-
-  items.forEach(item => {
+  
+  return items.map(item => {
     const [itemEntityType, itemEntityId] = item.hashKey.split('#');
-
-    if (itemEntityType === 'STARTUP') {
-      item.entityType = 'STARTUP';
-    } else if (itemEntityType === 'ENABLER') {
-      item.entityType = 'ENABLER';
-    }
-
-    if (!entityMap[itemEntityId]) {
-      entityMap[itemEntityId] = {
-        entityType: itemEntityType,
-        items: []
-      };
-    }
-
-    entityMap[itemEntityId].items.push(item);
-  })
-
-  const entities = [];
-
-  Object.entries(entityMap).forEach(([itemEntityId, { entityType: itemEntityType, items }]) => {
-    const entity = {
+    
+    return {
       entityId: itemEntityId,
-      entityType: itemEntityType,
+      entityType: itemEntityType === 'STARTUP' ? 'STARTUP' : 'ENABLER',
+      requestId: item.requestId,
+      originalName: item.originalName,
+      newName: item.newName,
+      isApproved: item.isApproved,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      requestType: item.requestType
     };
-
-    items.forEach(item => {
-      entity.requestId = item.requestId;
-      entity.originalName = item.originalName;
-      entity.newName = item.newName;
-      entity.isApproved = item.isApproved;
-      entity.createdAt = item.createdAt;
-    })
-
-    entities.push(entity);
-  })
-
-  return entities;
+  });
 }

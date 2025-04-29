@@ -345,7 +345,7 @@ type Query {
   getSuggestions(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
   getAnalytics(entityType: EntityType!, entityId: String!): Analytics! @aws_api_key
   getSavedProfiles(entityType: EntityType!, entityId: String!): [Entity!]! @aws_api_key
-  getNameChangeRequests: [NameChangeRequest!]! @aws_api_key
+  getNameChangeRequests(isApproved: Boolean): [NameChangeRequest!]! @aws_api_key
   getMapListAdmin: MapListAdminResponse! @aws_api_key
 }
 
