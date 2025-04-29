@@ -6,6 +6,7 @@ from infra.cognito.identity_pool import IdentityPoolConstruct
 from infra.cognito.user_pool import UserPoolConstruct
 from infra.config import Config
 from infra.dynamodb.entity_table import EntityTable
+from infra.functions.email_sender import EmailSender
 from infra.functions.get_analytics import GetAnalytics
 from infra.functions.get_saved_profiles import GetSavedProfiles
 from infra.functions.get_suggestions import GetSuggestions
@@ -26,6 +27,7 @@ class ElevateBeStack(Stack):
             scope=scope,
             stage=stage,
             main_resources_name=main_resources_name,
+            account_id=self.account,
             env=kwargs.get('env'),
         )
 
@@ -62,6 +64,13 @@ class ElevateBeStack(Stack):
             'LLMRAGAPI',
             config=self.config,
             entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
+        )
+
+        email_sender = EmailSender(
+            self,
+            'EmailSender',
+            config=self.config,
             common_dependencies_layer=common_dependencies_layer,
         )
 
@@ -112,6 +121,7 @@ class ElevateBeStack(Stack):
             get_analytics_lambda=get_analytics.get_analytics_lambda,
             get_saved_profiles_lambda=get_saved_profiles.get_saved_profiles_lambda,
             suggestions_cron_lambda=suggestions_cron_lambda.lambda_suggestions_cron,
+            email_queue=email_sender.email_queue,
         )
 
         llm_rag_api.set_appsync_api(api)

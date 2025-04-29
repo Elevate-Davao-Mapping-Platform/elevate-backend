@@ -93,8 +93,14 @@ export function response(ctx) {
 
   return {
     success: true,
-    message: ctx.prev.result.isApproved
+    message: ctx.args.input.isApproved
       ? 'Name change request approved and entity name updated successfully.'
-      : 'Name change request not approved.'
+      : 'Name change request not approved.',
+    requestId: ctx.args.input.requestId,
+    newName: ctx.prev.result.newName,
+    entityType: ctx.args.input.entityType,
+    isApproved: ctx.args.input.isApproved,
+    originalName: ctx.prev.result.originalName,
+    email: ctx.prev.result.email,
   };
 }

@@ -31,6 +31,7 @@ class Config:
         scope: Construct,
         stage: str,
         main_resources_name: str,
+        account_id: str,
         env: Optional[Environment] = None,
     ):
         # Core settings
@@ -44,7 +45,7 @@ class Config:
         self.region = 'ap-southeast-1'
         self.bedrock_region = 'us-east-1'
 
-        self.account_id = env.account if env else scope.node.try_get_context('account')
+        self.account_id = account_id
 
         # Environment-specific settings
         self.is_prod = stage == 'prod'
