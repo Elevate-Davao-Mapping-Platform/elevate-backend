@@ -34,23 +34,21 @@ export function response(ctx) {
   let enablersLength = 0;
   let pendingRequestsLen = 0;
 
-  items.forEach(item => {
-    if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
-      const entityId = item.hashKey.split('#')[1];
-      const entityType = item.hashKey.split('#')[0];
-
-    if (!entityMap[entityId]) {
-      entityMap[entityId] = {
-        id: entityId,
-        type: entityType,
-      }
-    }
-  }
-  });
-
   // Process items sequentially
   items.forEach(item => {
-    // Handle name change requests
+    const entityId = item.hashKey.split('#')[1];
+    const entityType = item.hashKey.split('#')[0];
+
+    // First pass: create entity map
+    if (!entityMap[entityId]) {
+      entityMap[entityId] = {
+        entityType: entityType,
+        [entityType === 'STARTUP' ? 'startupId' : 'enablerId']: entityId,
+        __typename: entityType === 'STARTUP' ? 'Startup' : 'Enabler',
+      }
+    }
+
+    // Second pass: handle name change requests
     if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
       const entityId = item.hashKey.split('#')[1];
       const entityType = item.hashKey.split('#')[0];
@@ -69,37 +67,65 @@ export function response(ctx) {
       pendingRequestsLen = pendingRequestsLen + 1;
 
       const nameChangeRequestStatus = item.isApproved === null ? 'PENDING' : item.isApproved === true ? 'APPROVED' : 'REJECTED';
-      if (!entityMap[entityId]) {
-        entityMap[entityId] = {
-          id: entityId,
-          type: entityType,
-        };
-      }
       entityMap[entityId].nameChangeRequestStatus = nameChangeRequestStatus;
     }
 
-    // Handle entity metadata
-    if (item.rangeKey === 'STARTUP#METADATA' || item.rangeKey === 'ENABLER#METADATA') {
-      const entityId = item.hashKey.split('#')[1];
-
-      if (item.rangeKey === 'STARTUP#METADATA') {
-        entityMap[entityId].name = item.startUpName || '';
+    // Third pass: handle entity metadata
+    if (entityType === 'STARTUP') {
+      switch (item.rangeKey) {
+        case 'STARTUP#METADATA':
+          entityMap[entityId].startUpName = item.startUpName;
+          entityMap[entityId].email = item.email;
+          entityMap[entityId].logoObjectKey = item.logoObjectKey;
+          entityMap[entityId].dateFounded = item.dateFounded;
+          entityMap[entityId].startupStage = item.startupStage;
+          entityMap[entityId].description = item.description;
+          entityMap[entityId].location = item.location;
+          entityMap[entityId].revenueModel = item.revenueModel;
+          entityMap[entityId].createdAt = item.createdAt;
+          entityMap[entityId].industries = item.industries;
+          entityMap[entityId].visibility = item.visibility ?? true;
+          startupLength = startupLength + 1;
+          break;
+        case 'STARTUP#CONTACTS':
+          entityMap[entityId].contacts = item.contacts;
+          break;
+        case 'STARTUP#MILESTONES':
+          entityMap[entityId].milestones = item.milestones;
+          break;
+        case 'STARTUP#FOUNDERS':
+          entityMap[entityId].founders = item.founders;
+          break;
       }
-
-      if (item.rangeKey === 'ENABLER#METADATA') {
-        entityMap[entityId].name = item.enablerName || '';
+    } else if (entityType === 'ENABLER') {
+      switch (item.rangeKey) {
+        case 'ENABLER#METADATA':
+          entityMap[entityId].enablerName = item.enablerName;
+          entityMap[entityId].email = item.email;
+          entityMap[entityId].logoObjectKey = item.logoObjectKey;
+          entityMap[entityId].dateFounded = item.dateFounded;
+          entityMap[entityId].organizationType = item.organizationType;
+          entityMap[entityId].description = item.description;
+          entityMap[entityId].location = item.location;
+          entityMap[entityId].industryFocus = item.industryFocus;
+          entityMap[entityId].supportType = item.supportType;
+          entityMap[entityId].fundingStageFocus = item.fundingStageFocus;
+          entityMap[entityId].investmentAmount = item.investmentAmount;
+          entityMap[entityId].startupStagePreference = item.startupStagePreference;
+          entityMap[entityId].preferredBusinessModels = item.preferredBusinessModels;
+          entityMap[entityId].visibility = item.visibility ?? true;
+          enablersLength = enablersLength + 1;
+          break;
+        case 'ENABLER#CONTACTS':
+          entityMap[entityId].contacts = item.contacts;
+          break;
+        case 'ENABLER#INVESTMENT_CRITERIA':
+          entityMap[entityId].investmentCriteria = item.investmentCriteria;
+          break;
+        case 'ENABLER#PORTFOLIO':
+          entityMap[entityId].portfolio = item.portfolio;
+          break;
       }
-
-      entityMap[entityId].logoObjectKey = item.logoObjectKey || '';
-      entityMap[entityId].dateFounded = item.dateFounded || '';
-      entityMap[entityId].industries = item.industries || [];
-      entityMap[entityId].description = item.description || '';
-      entityMap[entityId].location = item.location || {
-        address: '',
-        latlng: { lat: 0, lng: 0 }
-      };
-      entityMap[entityId].visibility = item.visibility ?? true;
-      startupLength = startupLength + 1;
     }
   });
 
