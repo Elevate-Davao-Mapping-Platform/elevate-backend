@@ -32,7 +32,7 @@ export function response(ctx) {
   const requestList = [];
   let startupLength = 0;
   let enablersLength = 0;
-  let pendingRequestsLen = 0;
+  let pendingRequestsLength = 0;
 
   // Process items sequentially
   items.forEach(item => {
@@ -64,7 +64,7 @@ export function response(ctx) {
         updatedAt: item.updatedAt
       });
 
-      pendingRequestsLen = pendingRequestsLen + 1;
+      pendingRequestsLength = pendingRequestsLength + 1;
 
       const nameChangeRequestStatus = item.isApproved === null ? 'PENDING' : item.isApproved === true ? 'APPROVED' : 'REJECTED';
       entityMap[entityId].nameChangeRequestStatus = nameChangeRequestStatus;
@@ -137,6 +137,6 @@ export function response(ctx) {
     requestList,
     startupLength,
     enablersLength,
-    pendingRequestsLen
+    pendingRequestsLength
   };
 }
