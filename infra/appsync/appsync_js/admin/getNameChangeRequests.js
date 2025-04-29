@@ -26,10 +26,10 @@ export function response(ctx) {
   }
 
   const { items } = ctx.result;
-  
+
   return items.map(item => {
     const [itemEntityType, itemEntityId] = item.hashKey.split('#');
-    
+
     return {
       entityId: itemEntityId,
       entityType: itemEntityType === 'STARTUP' ? 'STARTUP' : 'ENABLER',
