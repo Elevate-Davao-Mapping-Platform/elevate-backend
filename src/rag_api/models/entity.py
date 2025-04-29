@@ -1,9 +1,6 @@
 import os
 
-from pynamodb.attributes import (
-    DiscriminatorAttribute,
-    UnicodeAttribute,
-)
+from pynamodb.attributes import DiscriminatorAttribute, UnicodeAttribute
 from pynamodb.models import Model
 
 
