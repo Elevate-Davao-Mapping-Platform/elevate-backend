@@ -123,6 +123,8 @@ type Startup {
   founders: [Founder!]!
   createdAt: String
   isSaved: Boolean
+  visibility: Boolean
+  nameChangeRequestStatus: Boolean
 }
 
 input StartupInput {
@@ -187,6 +189,8 @@ type Enabler {
   portfolio: [PortfolioItem!]!
   createdAt: String
   isSaved: Boolean
+  visibility: Boolean
+  nameChangeRequestStatus: Boolean
 }
 
 input EnablerInput {
@@ -284,10 +288,6 @@ type Analytics {
 # Admin related types
 # ===================================
 
-type NameChangeRequestStatus {
-  isApproved: Boolean
-}
-
 type NameChangeRequest {
   requestId: String!
   entityId: String!
@@ -313,21 +313,8 @@ input RespondNameChangeInput {
   isApproved: Boolean!
 }
 
-type MapListEntity {
-  id: ID!
-  type: EntityType
-  name: String
-  logoObjectKey: String
-  dateFounded: String
-  industries: [String]
-  description: String
-  location: Location
-  nameChangeRequestStatus: NameChangeRequestStatus
-  visibility: Boolean
-}
-
 type MapListAdminResponse {
-  mapList: [MapListEntity!]!
+  mapList: [Entity!]!
   requestList: [NameChangeRequest!]!
   startupLength: Int!
   enablersLength: Int!
