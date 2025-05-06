@@ -56,7 +56,9 @@ export function response(ctx) {
                     location: item.location,
                     revenueModel: item.revenueModel,
                     createdAt: item.createdAt,
-                    industries: item.industries
+                    industries: item.industries,
+                    visibility: item.visibility,
+                    updatedAt: item.updatedAt,
                 });
                 break;
             case 'STARTUP#CONTACTS':

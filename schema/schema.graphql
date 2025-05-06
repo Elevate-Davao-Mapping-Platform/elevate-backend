@@ -125,6 +125,7 @@ type Startup {
   isSaved: Boolean
   visibility: Boolean
   nameChangeRequestStatus: Boolean
+  updatedAt: String
 }
 
 input StartupInput {
@@ -140,6 +141,20 @@ input StartupInput {
   contacts: [ContactInput!]!
   milestones: [MilestoneInput!]!
   founders: [FounderInput!]!
+}
+
+input StartupUpdateInput {
+  logoObjectKey: String
+  dateFounded: String
+  startupStage: String
+  description: String
+  revenueModel: [String!]
+  location: LocationInput
+  industries: [String!]
+  contacts: [ContactInput!]
+  milestones: [MilestoneInput!]
+  founders: [FounderInput!]
+  visibility: Boolean
 }
 
 # ===================================
@@ -191,6 +206,7 @@ type Enabler {
   isSaved: Boolean
   visibility: Boolean
   nameChangeRequestStatus: Boolean
+  updatedAt: String
 }
 
 input EnablerInput {
@@ -210,6 +226,24 @@ input EnablerInput {
   preferredBusinessModels: [String!]!
   investmentCriteria: [InvestmentCriteriaInput!]!
   portfolio: [PortfolioItemInput!]!
+}
+
+input EnablerUpdateInput {
+  logoObjectKey: String
+  dateFounded: String
+  organizationType: [String!]
+  description: String
+  location: LocationInput
+  contacts: [ContactInput!]
+  industryFocus: [String!]
+  supportType: [String!]
+  fundingStageFocus: [String!]
+  investmentAmount: Float
+  startupStagePreference: [String!]
+  preferredBusinessModels: [String!]
+  investmentCriteria: [InvestmentCriteriaInput!]
+  portfolio: [PortfolioItemInput!]
+  visibility: Boolean
 }
 
 # ===================================
@@ -353,10 +387,10 @@ type Mutation {
   sendChat(input: ChatIn!): SendChatResponse! @aws_api_key
   sendChatChunk(input: ChatChunkInput!): ChatOut! @aws_api_key
   createStartup(input: StartupInput!): MutationResponse! @aws_api_key
-  updateStartup(input: StartupInput!, startupId: String!): MutationResponse!
+  updateStartup(input: StartupUpdateInput!, startupId: String!): MutationResponse!
     @aws_api_key
   createEnabler(input: EnablerInput!): MutationResponse! @aws_api_key
-  updateEnabler(input: EnablerInput!, enablerId: String!): MutationResponse!
+  updateEnabler(input: EnablerUpdateInput!, enablerId: String!): MutationResponse!
     @aws_api_key
   saveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key
   unsaveProfile(input: SaveProfileInput!): MutationResponse! @aws_api_key

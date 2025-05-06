@@ -2,6 +2,7 @@ import { util } from '@aws-appsync/utils';
 
 export function request(ctx) {
     const tableName = ctx.env.TABLE_NAME;
+    const updatedAt = util.time.nowISO8601();
 
     const transactItems = [];
     const { startupId } = ctx.args;
@@ -18,7 +19,8 @@ export function request(ctx) {
         description: '#desc',
         revenueModel: '#revenue',
         location: '#loc',
-        industries: '#industries'
+        industries: '#industries',
+        visibility: '#visibility',
     };
 
     const forSuggestionGenerationChangedFields =[
@@ -34,6 +36,9 @@ export function request(ctx) {
     updateExpression.push('#forSuggestionGeneration = :forSuggestionGeneration');
     expressionValues[`:forSuggestionGeneration`] = forSuggestionGenerationChanged;
     expressionNames[`#forSuggestionGeneration`] = 'forSuggestionGeneration';
+    updateExpression.push('#updatedAt = :updatedAt');
+    expressionValues[':updatedAt'] = updatedAt;
+    expressionNames['#updatedAt'] = 'updatedAt';
 
     for (const [field, placeholder] of Object.entries(fields)) {
         if (ctx.args.input[field] !== undefined) {

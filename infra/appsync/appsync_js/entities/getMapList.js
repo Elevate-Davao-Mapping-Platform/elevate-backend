@@ -73,7 +73,11 @@ export function response(ctx) {
         items.forEach(item => {
             if (itemEntityType === 'STARTUP') {
                 switch (item.rangeKey) {
-                    case 'STARTUP#METADATA':
+                    case 'STARTUP#METADATA': {
+                        if (!item.visibility) {
+                            return;
+                        }
+
                         Object.assign(entity, {
                             startUpName: item.startUpName,
                             email: item.email,
@@ -84,9 +88,12 @@ export function response(ctx) {
                             location: item.location,
                             revenueModel: item.revenueModel,
                             createdAt: item.createdAt,
-                            industries: item.industries
+                            industries: item.industries,
+                            visibility: item.visibility,
+                            updatedAt: item.updatedAt
                         });
                         break;
+                    }
                     case 'STARTUP#CONTACTS':
                         entity.contacts = item.contacts || [];
                         break;
@@ -99,7 +106,11 @@ export function response(ctx) {
                 }
             } else if (itemEntityType === 'ENABLER') {
                 switch (item.rangeKey) {
-                    case 'ENABLER#METADATA':
+                    case 'ENABLER#METADATA': {
+                        if (!item.visibility) {
+                            return;
+                        }
+
                         Object.assign(entity, {
                             enablerName: item.enablerName,
                             email: item.email,
@@ -113,9 +124,12 @@ export function response(ctx) {
                             fundingStageFocus: item.fundingStageFocus,
                             investmentAmount: item.investmentAmount,
                             startupStagePreference: item.startupStagePreference,
-                            preferredBusinessModels: item.preferredBusinessModels
+                            preferredBusinessModels: item.preferredBusinessModels,
+                            visibility: item.visibility,
+                            updatedAt: item.updatedAt
                         });
                         break;
+                    }
                     case 'ENABLER#CONTACTS':
                         entity.contacts = item.contacts || [];
                         break;
