@@ -1,0 +1,41 @@
+name: Bandit Check on Push Workflow
+
+on: push
+
+jobs:
+    sast_scan:
+        name: Run Bandit Scan
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Set Up Python
+              uses: actions/setup-python@v3
+              with:
+                  python-version: 3.12
+
+            #----------------------------------------------
+            #  -----  Install Bandit   -----
+            #----------------------------------------------
+
+            - name: Install Bandit
+              run: pip install bandit
+
+            #----------------------------------------------
+            #  -----  Run Bandit Scan   -----
+            #----------------------------------------------
+
+            - name: Run Bandit Scan
+              run: bandit -ll -ii -r . -f json -o bandit-report.json
+
+            #----------------------------------------------
+            #  -----  Upload Bandit Scan Artifact   -----
+            #----------------------------------------------
+
+            - name: Upload Bandit Scan Artifact
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: bandit-findings
+                  path: bandit-report.json

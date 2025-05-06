@@ -3,35 +3,34 @@ name: Formatting Check on Push Workflow
 on: push
 
 jobs:
-  format-check:
-    runs-on: ubuntu-latest
+    format-check:
+        runs-on: ubuntu-latest
 
-    steps:
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
-      - uses: actions/checkout@v4
+        steps:
+            #----------------------------------------------
+            #       check-out repo and set-up python
+            #----------------------------------------------
+            - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-         python-version: '3.12'
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.12"
 
-      #----------------------------------------------
-      #  -----  install poetry  -----
-      #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+            #----------------------------------------------
+            #  -----  install poetry  -----
+            #----------------------------------------------
+            - name: Install Poetry
+              uses: snok/install-poetry@v1
 
+            #----------------------------------------------
+            #  -----  install dependencies   -----
+            #----------------------------------------------
+            - name: Install dependencies
+              run: poetry install --only format
 
-      #----------------------------------------------
-      #  -----  install dependencies   -----
-      #----------------------------------------------
-      - name: Install dependencies
-        run: poetry install --only format
-
-      #----------------------------------------------
-      #  -----  Run Formatter   -----
-      #----------------------------------------------
-      - name: Run Formatters
-        run: |
-          poetry run ruff format --check
+            #----------------------------------------------
+            #  -----  Run Formatter   -----
+            #----------------------------------------------
+            - name: Run Formatters
+              run: |
+                  poetry run ruff format --check
