@@ -74,10 +74,6 @@ export function response(ctx) {
             if (itemEntityType === 'STARTUP') {
                 switch (item.rangeKey) {
                     case 'STARTUP#METADATA': {
-                        if (!item.visibility) {
-                            return;
-                        }
-
                         Object.assign(entity, {
                             startUpName: item.startUpName,
                             email: item.email,
@@ -89,8 +85,8 @@ export function response(ctx) {
                             revenueModel: item.revenueModel,
                             createdAt: item.createdAt,
                             industries: item.industries,
-                            visibility: item.visibility,
-                            updatedAt: item.updatedAt
+                            visibility: item.visibility === null ? true : item.visibility,
+                            updatedAt: item.updatedAt ?? item.createdAt
                         });
                         break;
                     }
@@ -107,10 +103,6 @@ export function response(ctx) {
             } else if (itemEntityType === 'ENABLER') {
                 switch (item.rangeKey) {
                     case 'ENABLER#METADATA': {
-                        if (!item.visibility) {
-                            return;
-                        }
-
                         Object.assign(entity, {
                             enablerName: item.enablerName,
                             email: item.email,
@@ -125,8 +117,8 @@ export function response(ctx) {
                             investmentAmount: item.investmentAmount,
                             startupStagePreference: item.startupStagePreference,
                             preferredBusinessModels: item.preferredBusinessModels,
-                            visibility: item.visibility,
-                            updatedAt: item.updatedAt
+                            visibility: item.visibility === null ? true : item.visibility,
+                            updatedAt: item.updatedAt ?? item.createdAt
                         });
                         break;
                     }
@@ -143,7 +135,9 @@ export function response(ctx) {
             }
         });
 
-        entities.push(entity);
+        if (entity.visibility !== false) {
+            entities.push(entity);
+        }
     });
 
     return entities;
