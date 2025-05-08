@@ -57,8 +57,8 @@ export function response(ctx) {
                     revenueModel: item.revenueModel,
                     createdAt: item.createdAt,
                     industries: item.industries,
-                    visibility: item.visibility,
-                    updatedAt: item.updatedAt,
+                    visibility: item.visibility === null ? true : item.visibility,
+                    updatedAt: item.updatedAt ?? item.createdAt,
                 });
                 break;
             case 'STARTUP#CONTACTS':

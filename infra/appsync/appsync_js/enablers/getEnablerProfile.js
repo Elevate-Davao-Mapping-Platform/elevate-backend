@@ -61,8 +61,8 @@ export function response(ctx) {
                     startupStagePreference: item.startupStagePreference,
                     preferredBusinessModels: item.preferredBusinessModels,
                     createdAt: item.createdAt,
-                    visibility: item.visibility,
-                    updatedAt: item.updatedAt,
+                    visibility: item.visibility === null ? true : item.visibility,
+                    updatedAt: item.updatedAt ?? item.createdAt,
                 });
                 break;
             case 'ENABLER#CONTACTS':
