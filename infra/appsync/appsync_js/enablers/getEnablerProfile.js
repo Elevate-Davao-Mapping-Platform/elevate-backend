@@ -88,6 +88,19 @@ export function response(ctx) {
             }
             suggestions.push(suggestion);
         }
+
+        if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
+            enabler.nameChangeRequestStatus = {
+                requestId: item.requestId,
+                requestType: item.requestType,
+                entityId: enablerId,
+                entityType: 'ENABLER',
+                originalName: item.originalName,
+                newName: item.newName,
+                isApproved: item.isApproved,
+                updatedAt: item.updatedAt
+            };
+        }
     });
 
     enabler.suggestions = suggestions;

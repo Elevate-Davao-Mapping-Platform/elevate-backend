@@ -72,6 +72,18 @@ export function response(ctx) {
                 break;
         }
 
+        if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
+            startup.nameChangeRequestStatus = {
+                requestId: item.requestId,
+                requestType: item.requestType,
+                entityId: startupId,
+                entityType: 'STARTUP',
+                originalName: item.originalName,
+                newName: item.newName,
+                isApproved: item.isApproved,
+                updatedAt: item.updatedAt
+            };
+        }
     });
 
     startup.suggestions = suggestions;

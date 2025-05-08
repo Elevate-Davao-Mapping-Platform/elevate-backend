@@ -100,6 +100,20 @@ export function response(ctx) {
                         entity.founders = item.founders;
                         break;
                 }
+
+                if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
+                    entity.nameChangeRequestStatus = {
+                        requestId: item.requestId,
+                        requestType: item.requestType,
+                        entityId: itemEntityId,
+                        entityType: itemEntityType,
+                        originalName: item.originalName,
+                        newName: item.newName,
+                        isApproved: item.isApproved,
+                        updatedAt: item.updatedAt
+                    };
+                }
+
             } else if (itemEntityType === 'ENABLER') {
                 switch (item.rangeKey) {
                     case 'ENABLER#METADATA': {
@@ -131,6 +145,19 @@ export function response(ctx) {
                     case 'ENABLER#PORTFOLIO':
                         entity.portfolio = item.portfolio;
                         break;
+                }
+
+                if (item.rangeKey && item.rangeKey.startsWith('REQUEST#NAME_CHANGE#') && item.isApproved === null) {
+                    entity.nameChangeRequestStatus = {
+                        requestId: item.requestId,
+                        requestType: item.requestType,
+                        entityId: itemEntityId,
+                        entityType: itemEntityType,
+                        originalName: item.originalName,
+                        newName: item.newName,
+                        isApproved: item.isApproved,
+                        updatedAt: item.updatedAt
+                    };
                 }
             }
         });

@@ -75,6 +75,17 @@ input ChatIn {
 # ===================================
 # Startup related types
 # ===================================
+type NameChangeRequest {
+  requestId: String!
+  entityId: String!
+  entityType: EntityType!
+  newName: String!
+  originalName: String!
+  isApproved: Boolean
+  requestType: String!
+  updatedAt: String!
+}
+
 type Milestone {
   title: String!
   dateAchieved: String!
@@ -124,7 +135,7 @@ type Startup {
   createdAt: String
   isSaved: Boolean
   visibility: Boolean
-  nameChangeRequestStatus: Boolean
+  nameChangeRequestStatus: NameChangeRequest
   updatedAt: String
 }
 
@@ -205,7 +216,7 @@ type Enabler {
   createdAt: String
   isSaved: Boolean
   visibility: Boolean
-  nameChangeRequestStatus: Boolean
+  nameChangeRequestStatus: NameChangeRequest
   updatedAt: String
 }
 
@@ -322,16 +333,6 @@ type Analytics {
 # Admin related types
 # ===================================
 
-type NameChangeRequest {
-  requestId: String!
-  entityId: String!
-  entityType: EntityType!
-  newName: String!
-  originalName: String!
-  isApproved: Boolean
-  requestType: String!
-  updatedAt: String!
-}
 
 input RequestNameChangeInput {
   entityId: String!
