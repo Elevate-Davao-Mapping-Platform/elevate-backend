@@ -66,8 +66,16 @@ export function response(ctx) {
 
       pendingRequestsLength = pendingRequestsLength + 1;
 
-      const nameChangeRequestStatus = item.isApproved === null ? 'PENDING' : item.isApproved === true ? 'APPROVED' : 'REJECTED';
-      entityMap[entityId].nameChangeRequestStatus = nameChangeRequestStatus;
+      entityMap[entityId].nameChangeRequestStatus = {
+        requestId: item.requestId,
+        requestType: item.requestType,
+        entityId: entityId,
+        entityType: entityType,
+        originalName: item.originalName,
+        newName: item.newName,
+        isApproved: item.isApproved,
+        updatedAt: item.updatedAt
+      };
     }
 
     // Third pass: handle entity metadata

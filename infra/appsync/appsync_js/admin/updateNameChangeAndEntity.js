@@ -11,6 +11,7 @@ export function request(ctx) {
   const { requestId, entityId, entityType, isApproved } = ctx.args.input;
   const { newName } = ctx.prev.result;
   const tableName = ctx.env.TABLE_NAME;
+  const updatedAt = util.time.nowISO8601();
 
   // If not approved, just update the request status
   if (!isApproved) {
@@ -23,10 +24,12 @@ export function request(ctx) {
       update: {
         expression: 'SET #isApproved = :isApproved',
         expressionValues: {
-          ':isApproved': util.dynamodb.toDynamoDB(isApproved)
+          ':isApproved': util.dynamodb.toDynamoDB(isApproved),
+          ':updatedAt': util.dynamodb.toDynamoDB(updatedAt)
         },
         expressionNames: {
-          '#isApproved': 'isApproved'
+          '#isApproved': 'isApproved',
+          '#updatedAt': 'updatedAt'
         }
       }
     };
@@ -48,10 +51,12 @@ export function request(ctx) {
         update: {
           expression: 'SET #isApproved = :isApproved',
           expressionValues: {
-            ':isApproved': util.dynamodb.toDynamoDB(isApproved)
+            ':isApproved': util.dynamodb.toDynamoDB(isApproved),
+            ':updatedAt': util.dynamodb.toDynamoDB(updatedAt)
           },
           expressionNames: {
-            '#isApproved': 'isApproved'
+            '#isApproved': 'isApproved',
+            '#updatedAt': 'updatedAt'
           }
         }
       },
@@ -65,10 +70,12 @@ export function request(ctx) {
         update: {
           expression: `SET #${nameField} = :${nameField}`,
           expressionValues: {
-            [`:${nameField}`]: util.dynamodb.toDynamoDB(newName)
+            [`:${nameField}`]: util.dynamodb.toDynamoDB(newName),
+            ':updatedAt': util.dynamodb.toDynamoDB(updatedAt)
           },
           expressionNames: {
-            [`#${nameField}`]: nameField
+            [`#${nameField}`]: nameField,
+            '#updatedAt': 'updatedAt'
           }
         }
       }
