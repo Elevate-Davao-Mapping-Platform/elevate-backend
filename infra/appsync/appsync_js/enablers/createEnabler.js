@@ -2,7 +2,9 @@ import { util } from '@aws-appsync/utils';
 
 export function request(ctx) {
     const enablerId = util.autoId();
-    const createdAt = util.time.nowISO8601();
+    const timestamp = util.time.nowISO8601();
+    const createdAt = timestamp;
+    const updatedAt = timestamp;
     const ksuid = util.autoKsuid();
 
     const tableName = ctx.env.TABLE_NAME;
@@ -31,6 +33,7 @@ export function request(ctx) {
             forSuggestionGeneration: true,
             GSI1PK: ksuid,
             createdAt,
+            updatedAt,
         })
     );
 
