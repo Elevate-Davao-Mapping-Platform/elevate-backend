@@ -45,7 +45,7 @@ export function response(ctx) {
     // Process each item based on its rangeKey
     items.forEach(item => {
         switch (item.rangeKey) {
-            case 'ENABLER#METADATA': 
+            case 'ENABLER#METADATA':
                 Object.assign(enabler, {
                     enablerName: item.enablerName,
                     email: item.email,
