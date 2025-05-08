@@ -60,7 +60,9 @@ export function response(ctx) {
                     investmentAmount: item.investmentAmount,
                     startupStagePreference: item.startupStagePreference,
                     preferredBusinessModels: item.preferredBusinessModels,
-                    createdAt: item.createdAt
+                    createdAt: item.createdAt,
+                    visibility: item.visibility === null ? true : item.visibility,
+                    updatedAt: item.updatedAt ?? item.createdAt,
                 });
                 break;
             case 'ENABLER#CONTACTS':

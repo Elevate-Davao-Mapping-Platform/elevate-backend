@@ -4,6 +4,7 @@ export function request(ctx) {
     const tableName = ctx.env.TABLE_NAME;
     const { enablerId } = ctx.args;
     const transactItems = [];
+    const updatedAt = util.time.nowISO8601();
 
     // Metadata update
     const updateExpression = [];
@@ -24,7 +25,8 @@ export function request(ctx) {
         investmentAmount: '#invAmount',
         startupStagePreference: '#stagePrefs',
         preferredBusinessModels: '#bizModels',
-        enablerName: '#enablerName'
+        enablerName: '#enablerName',
+        visibility: '#visibility',
     };
 
     const forSuggestionGenerationChangedFields =[
@@ -43,6 +45,9 @@ export function request(ctx) {
     updateExpression.push('#forSuggestionGeneration = :forSuggestionGeneration');
     expressionValues[`:forSuggestionGeneration`] = forSuggestionGenerationChanged;
     expressionNames[`#forSuggestionGeneration`] = 'forSuggestionGeneration';
+    updateExpression.push('#updatedAt = :updatedAt');
+    expressionValues[':updatedAt'] = updatedAt;
+    expressionNames['#updatedAt'] = 'updatedAt';
 
     for (const [field, placeholder] of Object.entries(fields)) {
         if (ctx.args.input[field] !== undefined) {

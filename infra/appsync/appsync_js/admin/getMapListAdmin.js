@@ -84,7 +84,8 @@ export function response(ctx) {
           entityMap[entityId].revenueModel = item.revenueModel;
           entityMap[entityId].createdAt = item.createdAt;
           entityMap[entityId].industries = item.industries;
-          entityMap[entityId].visibility = item.visibility ?? true;
+          entityMap[entityId].visibility = item.visibility === null ? true : item.visibility;
+          entityMap[entityId].updatedAt = item.updatedAt ?? item.createdAt;
           startupLength = startupLength + 1;
           break;
         case 'STARTUP#CONTACTS':
@@ -113,7 +114,8 @@ export function response(ctx) {
           entityMap[entityId].investmentAmount = item.investmentAmount;
           entityMap[entityId].startupStagePreference = item.startupStagePreference;
           entityMap[entityId].preferredBusinessModels = item.preferredBusinessModels;
-          entityMap[entityId].visibility = item.visibility ?? true;
+          entityMap[entityId].visibility = item.visibility === null ? true : item.visibility;
+          entityMap[entityId].updatedAt = item.updatedAt ?? item.createdAt;
           enablersLength = enablersLength + 1;
           break;
         case 'ENABLER#CONTACTS':
