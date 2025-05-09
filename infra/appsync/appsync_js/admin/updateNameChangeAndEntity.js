@@ -22,7 +22,7 @@ export function request(ctx) {
         rangeKey: `REQUEST#NAME_CHANGE#${requestId}`
       }),
       update: {
-        expression: 'SET #isApproved = :isApproved',
+        expression: 'SET #isApproved = :isApproved, #updatedAt = :updatedAt',
         expressionValues: {
           ':isApproved': util.dynamodb.toDynamoDB(isApproved),
           ':updatedAt': util.dynamodb.toDynamoDB(updatedAt)
@@ -49,7 +49,7 @@ export function request(ctx) {
           rangeKey: `REQUEST#NAME_CHANGE#${requestId}`
         }),
         update: {
-          expression: 'SET #isApproved = :isApproved',
+          expression: 'SET #isApproved = :isApproved, #updatedAt = :updatedAt',
           expressionValues: {
             ':isApproved': util.dynamodb.toDynamoDB(isApproved),
             ':updatedAt': util.dynamodb.toDynamoDB(updatedAt)
@@ -68,7 +68,7 @@ export function request(ctx) {
           rangeKey: `${entityType}#METADATA`
         }),
         update: {
-          expression: `SET #${nameField} = :${nameField}`,
+          expression: `SET #${nameField} = :${nameField}, #updatedAt = :updatedAt`,
           expressionValues: {
             [`:${nameField}`]: util.dynamodb.toDynamoDB(newName),
             ':updatedAt': util.dynamodb.toDynamoDB(updatedAt)
