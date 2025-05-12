@@ -22,6 +22,17 @@ aiohttp = "3.11.14"
 instructor = "1.7.7"
 anthropic = {version = "0.42.0", extras = ["bedrock"]}
 
+[tool.poetry.group.scraping.dependencies]
+beautifulsoup4 = "4.13.4"
+certifi = "2025.4.26"
+charset-normalizer = "3.4.2"
+idna = "3.10"
+pdfkit = "1.0.0"
+requests = "2.32.3"
+soupsieve = "2.7"
+typing-extensions = "4.13.2"
+urllib3 = "2.4.0"
+
 [tool.poetry.group.dev.dependencies]
 aws-cdk-lib = "2.185.0"
 constructs = "^10.4.2"

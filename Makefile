@@ -4,6 +4,9 @@ rag_api_dependencies:
 suggestions_dependencies:
 	poetry export --only=suggestions -o src/generate_suggestions/layer/requirements.txt
 
+scraping_dependencies:
+	poetry export --only=scraping -o src/scraping/layer/requirements.txt
+
 common_dependencies:
 	poetry export -o infra/layers/common_dependencies/requirements.txt
 

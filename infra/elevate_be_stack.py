@@ -11,6 +11,7 @@ from infra.functions.get_analytics import GetAnalytics
 from infra.functions.get_saved_profiles import GetSavedProfiles
 from infra.functions.get_suggestions import GetSuggestions
 from infra.functions.rag_api import LLMRAGAPI
+from infra.functions.scraping_lambda import ScrapingLambda
 from infra.functions.suggestions_cron import SuggestionsCron
 from infra.layers.layers import CommonDependenciesLayer
 from infra.s3.general_bucket import GeneralBucketConstruct
@@ -104,6 +105,13 @@ class ElevateBeStack(Stack):
             'SuggestionsCron',
             config=self.config,
             entity_table=entity_table,
+            common_dependencies_layer=common_dependencies_layer,
+        )
+
+        ScrapingLambda(
+            self,
+            'ScrapingLambda',
+            config=self.config,
             common_dependencies_layer=common_dependencies_layer,
         )
 
